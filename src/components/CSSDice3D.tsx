@@ -206,7 +206,7 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
       const deltaY = e.clientY - lastMouseRef.current.y;
       setRotation(prev => ({
         x: prev.x - deltaY * 0.5,
-        y: prev.y + deltaX * 0.5
+        y: prev.y - deltaX * 0.5
       }));
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
     };
