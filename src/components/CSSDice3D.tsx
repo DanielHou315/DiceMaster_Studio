@@ -206,7 +206,7 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
       const deltaY = e.clientY - lastMouseRef.current.y;
       setRotation(prev => ({
         x: prev.x - deltaY * 0.5,
-        y: prev.y - deltaX * 0.5
+        y: prev.y + deltaX * 0.5
       }));
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -243,8 +243,31 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
   const topFace = getTopFace(rx, ry);
   const topName = Object.entries(FACE_TO_ID).find(([, id]) => id === topFace)?.[0] || 'top';
 
+  /* Background grid — flat XY plane for spatial reference */
+  const GRID_SIZE = 600;
+  const CELL = 30;
+  const gridSvg = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${GRID_SIZE}" height="${GRID_SIZE}">
+      <defs><pattern id="g" width="${CELL}" height="${CELL}" patternUnits="userSpaceOnUse">
+        <path d="M ${CELL} 0 L 0 0 0 ${CELL}" fill="none" stroke="rgba(16,185,129,0.3)" stroke-width="0.5"/>
+      </pattern></defs>
+      <rect width="${GRID_SIZE}" height="${GRID_SIZE}" fill="url(#g)"/>
+    </svg>`
+  )}`;
+
   return (
-    <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-zinc-950 cursor-grab active:cursor-grabbing relative overflow-visible" onMouseDown={handleMouseDown} style={{ perspective: '1000px' }}>
+    <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-zinc-950 cursor-grab active:cursor-grabbing relative overflow-hidden" onMouseDown={handleMouseDown} style={{ perspective: '1000px' }}>
+      {/* Fixed background grid plane */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `url("${gridSvg}")`,
+          backgroundSize: `${CELL}px ${CELL}px`,
+          backgroundPosition: 'center',
+        }}
+      />
+
+      {/* Dice — rotates with drag */}
       <div
         className={cn(
           "w-48 h-48 relative transition-transform duration-100 ease-out",
@@ -252,22 +275,16 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
         )}
         style={{
           transformStyle: 'preserve-3d',
-          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`
+          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
         }}
       >
-          {/* Front */}
           <Face content={screens.front} transform="translateZ(96px)" label="Front" textRotation={textRotations.front} />
-          {/* Back */}
           <Face content={screens.back} transform="rotateY(180deg) translateZ(96px)" label="Back" textRotation={textRotations.back} />
-          {/* Right */}
           <Face content={screens.right} transform="rotateY(90deg) translateZ(96px)" label="Right" textRotation={textRotations.right} />
-          {/* Left */}
           <Face content={screens.left} transform="rotateY(-90deg) translateZ(96px)" label="Left" textRotation={textRotations.left} />
-          {/* Top */}
           <Face content={screens.top} transform="rotateX(90deg) translateZ(96px)" label="Top" textRotation={textRotations.top} />
-          {/* Bottom */}
           <Face content={screens.bottom} transform="rotateX(-90deg) translateZ(96px)" label="Bottom" textRotation={textRotations.bottom} />
-        </div>
+      </div>
 
       <div className="absolute bottom-4 left-4 text-[10px] text-zinc-500 font-mono">
         CSS 3D Engine • Drag to Rotate • Top: {topName}
