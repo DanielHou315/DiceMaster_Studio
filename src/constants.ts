@@ -1,195 +1,125 @@
-export const CHINESE_QUIZLET_CODE = `from m5stack import *
-from m5ui import *
-from uiflow import *
+export const CHINESE_QUIZLET_CODE = `"""
+Shake Quizlet — dice API example.
+Shaking the dice cycles through flashcards.
+"""
 import random
-
-# MOCK_SCREENS = {"top": {"type": "text", "content": "Chinese Quizlet"}, "bottom": {"type": "text", "content": "Shake to Start"}, "front": {"type": "text", "content": "DiceMaster"}, "back": {"type": "text", "content": "Ready"}, "left": {"type": "text", "content": "v2.4"}, "right": {"type": "text", "content": "Lab"}}
-
-# Chinese Quizlet - Advanced Multi-Screen Game
-# Official DiceMaster Example: https://github.com/DanielHou315/DiceMaster
-# Top: Question in English
-# Bottom: Answer in Chinese
-# Sides: Visual hints/Context
-
-cards = [
-    {
-        "eng": "Apple",
-        "chi": "苹果 (Píngguǒ)",
-        "hints": ["Red Fruit", "Sweet", "Crunchy", "🍎"],
-        "mock": {
-            "top": {"type": "text", "content": "How do you say 'Apple'?"},
-            "bottom": {"type": "text", "content": "苹果 (Píngguǒ)"},
-            "front": {"type": "text", "content": "Red Fruit"},
-            "back": {"type": "text", "content": "Sweet"},
-            "left": {"type": "text", "content": "Crunchy"},
-            "right": {"type": "text", "content": "🍎"}
-        }
-    },
-    {
-        "eng": "Computer",
-        "chi": "电脑 (Diànnǎo)",
-        "hints": ["Electric Brain", "Screen", "Keyboard", "💻"],
-        "mock": {
-            "top": {"type": "text", "content": "How do you say 'Computer'?"},
-            "bottom": {"type": "text", "content": "电脑 (Diànnǎo)"},
-            "front": {"type": "text", "content": "Electric Brain"},
-            "back": {"type": "text", "content": "Screen"},
-            "left": {"type": "text", "content": "Keyboard"},
-            "right": {"type": "text", "content": "💻"}
-        }
-    },
-    {
-        "eng": "Cat",
-        "chi": "猫 (Māo)",
-        "hints": ["Meow", "Feline", "Whiskers", "🐱"],
-        "mock": {
-            "top": {"type": "text", "content": "How do you say 'Cat'?"},
-            "bottom": {"type": "text", "content": "猫 (Māo)"},
-            "front": {"type": "text", "content": "Meow"},
-            "back": {"type": "text", "content": "Feline"},
-            "left": {"type": "text", "content": "Whiskers"},
-            "right": {"type": "text", "content": "🐱"}
-        }
-    }
-]
-
-current_idx = -1
-cooldown = 0
-
-def show_next():
-    global current_idx, cooldown
-    if cooldown > 0: return
-    
-    current_idx = (current_idx + 1) % len(cards)
-    card = cards[current_idx]
-    
-    lcd.clear()
-    lcd.setCursor(0, 0)
-    lcd.print("Question: " + card['eng'], 0, 0, 0xffffff)
-    lcd.print("Answer: " + card['chi'], 0, 40, 0x00ff00)
-    
-    # Update simulator state
-    print("--- QUIZLET TRIGGERED ---")
-    print("Card: " + card['eng'])
-    
-    # Cooldown to prevent double triggers
-    cooldown = 30 # ~3 seconds at 100ms loop
-
-# Initial setup
-lcd.setBrightness(50)
-lcd.print("Shake to Start Quiz", 10, 100, 0x00ff00)
-
-while True:
-    if imu0.was_shaken():
-        show_next()
-    
-    if cooldown > 0:
-        cooldown -= 1
-        
-    wait_ms(100)
-`;
-
-export const HARDWARE_OPTIMIZER_CODE = `# Hardware Optimizer Utility
-# Ported from DanielHou315/DiceMaster/scripts/hardware_optimizer.py
-# Calculates optimal screen refresh rates based on SPI bus load.
-
 import time
 
-screens = 6
-resolution = 240 * 240
-bit_depth = 16
-spi_clock = 40000000 # 40MHz
+from dice import screen, motion, log
+from dice.strategy import BaseStrategy
 
-def calculate_max_fps():
-    bits_per_frame = resolution * bit_depth
-    total_bits_per_refresh = bits_per_frame * screens
-    
-    # Theoretical max FPS
-    max_fps = spi_clock / total_bits_per_refresh
-    return max_fps
 
-print("--- DiceMaster Hardware Optimization ---")
-print(f"Screens: {screens}")
-print(f"Resolution: {resolution}px")
-print(f"SPI Clock: {spi_clock/1000000} MHz")
+class ShakeQuizletStrategy(BaseStrategy):
+    _strategy_name = "shake_quizlet"
 
-fps = calculate_max_fps()
-print(f"Theoretical Max FPS: {fps:.2f}")
+    def __init__(self, game_name, config, assets_path, **kwargs):
+        super().__init__(game_name, config, assets_path, **kwargs)
+        self.cards = [
+            {"q": "Apple", "a": "苹果", "hints": ["Red", "Sweet", "Fruit", "🍎"]},
+            {"q": "Cat", "a": "猫", "hints": ["Meow", "Feline", "Whiskers", "🐱"]},
+            {"q": "Computer", "a": "电脑", "hints": ["Screen", "Keyboard", "Electric", "💻"]},
+        ]
+        self.current = 0
+        self.last_shake = 0.0
 
-if fps < 30:
-    print("WARNING: SPI bandwidth limited. Consider reducing bit depth or resolution.")
-else:
-    print("STATUS: Bandwidth optimal for 30FPS operation.")
+    def start_strategy(self):
+        motion.on_shake(self._on_shake)
+        self._display()
+        log("ShakeQuizlet started")
+
+    def stop_strategy(self):
+        log("ShakeQuizlet stopped")
+
+    def _on_shake(self, intensity):
+        now = time.time()
+        if now - self.last_shake < 1.0:
+            return
+        self.last_shake = now
+        self.current = (self.current + 1) % len(self.cards)
+        self._display()
+
+    def _display(self):
+        card = self.cards[self.current]
+        screen.set_text(1, card["q"])
+        screen.set_text(6, card["a"])
+        for i, hint in enumerate(card["hints"][:4]):
+            screen.set_text(i + 2, hint)
+        log(f"Showing: {card['q']} = {card['a']}")
+
+
+game = ShakeQuizletStrategy("quizlet", {}, "/assets")
+game.start_strategy()
 `;
 
-export const DEFAULT_BASE_CODE = `from m5stack import *
-from m5ui import *
-from uiflow import *
-import random
+export const HARDWARE_OPTIMIZER_CODE = `"""
+Pipeline Test — sends text to screens on a timer.
+Simplest dice API example, no assets needed.
+"""
+from dice import screen, log, timer
+from dice.strategy import BaseStrategy
 
-# MOCK_SCREENS = {"top": {"type": "text", "content": "DiceMaster Quiz"}, "bottom": {"type": "text", "content": "Shake to Start"}, "front": {"type": "text", "content": "?"}, "back": {"type": "text", "content": "?"}, "left": {"type": "text", "content": "?"}, "right": {"type": "text", "content": "?"}}
 
-# DiceMaster Quiz Game
-# This script simulates a multi-screen quiz game.
-# Top: Question
-# Bottom: Answer
-# Sides: Hints
+class TestStrategy(BaseStrategy):
+    _strategy_name = "pipeline_test"
 
-lcd.setBrightness(100)
-lcd.clear()
+    def __init__(self, game_name, config, assets_path, **kwargs):
+        super().__init__(game_name, config, assets_path, **kwargs)
+        self.available_screen_ids = list(range(1, 7))
+        self.current_screen_index = 0
+        self.message_count = 0
+        self._timer_id = None
 
-questions = [
-    {
-        "q": "What is 7x8?", 
-        "a": "56", 
-        "h": ["50+6", "8x7", "7x7+7", "60-4"],
-        "mock": {
-            "top": {"type": "text", "content": "What is 7x8?"},
-            "bottom": {"type": "text", "content": "56"},
-            "front": {"type": "text", "content": "50+6"},
-            "back": {"type": "text", "content": "8x7"},
-            "left": {"type": "text", "content": "7x7+7"},
-            "right": {"type": "text", "content": "60-4"}
-        }
-    },
-    {
-        "q": "Capital of France?", 
-        "a": "Paris", 
-        "h": ["Eiffel Tower", "Louvre", "Seine", "Europe"],
-        "mock": {
-            "top": {"type": "text", "content": "Capital of France?"},
-            "bottom": {"type": "text", "content": "Paris"},
-            "front": {"type": "text", "content": "Eiffel Tower"},
-            "back": {"type": "text", "content": "Louvre"},
-            "left": {"type": "text", "content": "Seine"},
-            "right": {"type": "text", "content": "Europe"}
-        }
-    }
-]
+    def start_strategy(self):
+        self._timer_id = timer.set(1.0, self._send_notification)
+        log("TestStrategy started - sending notifications every 1s")
 
-current_q = 0
+    def stop_strategy(self):
+        if self._timer_id is not None:
+            timer.cancel(self._timer_id)
+            self._timer_id = None
+        log("TestStrategy stopped")
 
-def update_simulator(mock_data):
-    # In this simulator, we use the MOCK_SCREENS comment for initial state.
-    # For dynamic updates, we print to console which the user can see.
-    print("--- SIMULATOR UPDATE ---")
-    for face, data in mock_data.items():
-        print(f"{face.upper()}: {data['content']}")
+    def _send_notification(self):
+        target_id = self.available_screen_ids[self.current_screen_index]
+        self.current_screen_index = (self.current_screen_index + 1) % len(self.available_screen_ids)
+        self.message_count += 1
+        content = f"Test #{self.message_count} screen {target_id}"
+        screen.set_text(target_id, content)
+        log(f"Sent: {content}")
 
-def on_shake():
-    global current_q
-    current_q = (current_q + 1) % len(questions)
-    q = questions[current_q]
-    lcd.clear()
-    lcd.print(q['q'], 10, 10, 0x00ff00)
-    update_simulator(q['mock'])
 
-# Initial Screen
-lcd.print("DiceMaster", 20, 20, 0xffffff)
-lcd.print("Shake to Play", 20, 50, 0x00ff00)
+game = TestStrategy("test", {}, "/assets")
+game.start_strategy()
+`;
 
-while True:
-    if imu0.was_shaken():
-        on_shake()
-    wait_ms(100)
+export const DEFAULT_BASE_CODE = `"""
+DiceMaster — write your game here!
+
+Available APIs:
+  from dice import screen, motion, orientation, log, timer
+  from dice.strategy import BaseStrategy
+
+  screen.set_text(screen_id, text)    — show text on screen 1-6
+  screen.set_image(screen_id, path)   — show image on screen
+  motion.on_shake(callback)           — callback(intensity) on shake
+  orientation.on_change(callback)     — callback(top, bottom) on flip
+  timer.set(interval, callback)       — repeat every N seconds
+  timer.once(delay, callback)         — fire once after N seconds
+  timer.cancel(timer_id)              — cancel a timer
+  log(message)                        — print to console
+"""
+from dice import screen, log, timer
+
+
+count = 0
+
+def tick():
+    global count
+    count += 1
+    screen.set_text(1, f"Hello #{count}")
+    log(f"tick {count}")
+
+timer_id = timer.set(2.0, tick)
+screen.set_text(1, "Starting...")
+log("Game started! Screens will update every 2 seconds.")
 `;
