@@ -16,13 +16,14 @@ import { GameCard } from './components/Games/GameCard';
 import { AssetCard } from './components/Assets/AssetCard';
 import { serialService } from './services/serialService';
 import { pyodideService, WorkerMessage, SimStatus } from './services/pyodideService';
-import { loadGame, unpackZip, createBlobURLs, revokeBlobURLs, UnpackedGame } from './services/assetStore';
+import { loadGame, saveGame, unpackZip, createBlobURLs, revokeBlobURLs, UnpackedGame } from './services/assetStore';
 import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType } from './types';
-import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, HARDWARE_OPTIMIZER_CODE } from './constants';
+import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, DICE_API_REFERENCE } from './constants';
 import { Simulator2D } from './components/Simulator/Simulator2D';
 import { Simulator3DContainer } from './components/Simulator/Simulator3DContainer';
 import { CodeEditor } from './components/Editor/CodeEditor';
 import { GamesView } from './components/Games/GamesView';
+import { ExamplesGallery } from './components/Games/ExamplesGallery';
 import { GameContentEditor } from './components/Games/GameContentEditor';
 import { AssetsView } from './components/Assets/AssetsView';
 import { SettingsView } from './components/Settings/SettingsView';
@@ -235,30 +236,29 @@ export default function App() {
   const loadGitHubCode = async () => {
     try {
       setIsAnalyzing(true);
-      const response = await fetch('https://raw.githubusercontent.com/DanielHou315/DiceMaster/main/scripts/hardware_optimizer.py');
-      
-      let content = HARDWARE_OPTIMIZER_CODE;
+      const response = await fetch('https://raw.githubusercontent.com/DanielHou315/DiceMaster_Central_Web/main/README.md');
+
+      let content = DICE_API_REFERENCE;
       if (response.ok) {
         content = await response.text();
       }
-      
-      const newFile = { path: 'optimizer.py', content };
+
+      const newFile = { path: 'dice_api_reference.md', content };
       setFiles(prev => {
-        if (prev.some(f => f.path === 'optimizer.py')) return prev;
+        if (prev.some(f => f.path === 'dice_api_reference.md')) return prev;
         return [...prev, newFile];
       });
       setSelectedFile(newFile);
       setActiveTab('editor');
       setError(null);
     } catch (err) {
-      console.warn('Failed to fetch from GitHub, using local optimizer port');
-      const newFile = { path: 'optimizer.py', content: HARDWARE_OPTIMIZER_CODE };
+      console.warn('Failed to fetch from GitHub, using local API reference');
+      const newFile = { path: 'dice_api_reference.md', content: DICE_API_REFERENCE };
       setFiles(prev => {
-        if (prev.some(f => f.path === 'optimizer.py')) return prev;
+        if (prev.some(f => f.path === 'dice_api_reference.md')) return prev;
         return [...prev, newFile];
       });
       setSelectedFile(newFile);
-      // Stay on current tab instead of switching to editor
     } finally {
       setIsAnalyzing(false);
     }
@@ -352,6 +352,121 @@ export default function App() {
       }
     } catch (err) {
       console.error("Failed to inject featured game", err);
+    }
+  };
+
+  // Load an example game ZIP from /examples/ and parse it into mock_rounds
+  const parseExampleZip = async (zipBlob: Blob, nameOverride?: string): Promise<Omit<LanguageGame, 'id' | 'created_at'>> => {
+    const zip = await JSZip.loadAsync(zipBlob);
+
+    let manifest: { name: string; description?: string } = { name: 'Example Game' };
+    let strategyCode = '';
+    const assetMap: Record<string, Record<string, string>> = {}; // roundN -> face -> text
+
+    for (const [path, entry] of Object.entries(zip.files)) {
+      if (entry.dir) continue;
+      // Normalize path
+      const parts = path.split('/');
+      const normalizedPath = (parts.length > 1 && parts[0] !== 'assets' && parts[0] !== 'manifest.json' && parts[0] !== 'strategy.py' && parts[0] !== 'config.json')
+        ? parts.slice(1).join('/')
+        : path;
+
+      if (normalizedPath === 'manifest.json') {
+        const text = await entry.async('text');
+        try { manifest = JSON.parse(text); } catch { /* ignore */ }
+      } else if (normalizedPath === 'strategy.py') {
+        strategyCode = await entry.async('text');
+      } else if (normalizedPath.startsWith('assets/') && normalizedPath.endsWith('.json')) {
+        // e.g. assets/round_0_top.json
+        const m = normalizedPath.match(/round_(\d+)_(top|bottom|front|back|left|right)\.json$/);
+        if (m) {
+          const roundKey = m[1];
+          const face = m[2];
+          const data = JSON.parse(await entry.async('text'));
+          const textContent = data.texts?.[0]?.text ?? '';
+          if (!assetMap[roundKey]) assetMap[roundKey] = {};
+          assetMap[roundKey][face] = textContent;
+        }
+      }
+    }
+
+    const faces = ['top', 'bottom', 'front', 'back', 'left', 'right'] as const;
+    const roundIndices = Object.keys(assetMap).map(Number).sort((a, b) => a - b);
+
+    const toScreens = (round: Record<string, string>) =>
+      Object.fromEntries(faces.map(f => [f, { type: 'text' as const, content: round[f] ?? '' }]));
+
+    const mock_data = roundIndices.length > 0 ? toScreens(assetMap[String(roundIndices[0])]) : toScreens({});
+    const mock_rounds = roundIndices.map(i => JSON.stringify(toScreens(assetMap[String(i)])));
+
+    return {
+      name: nameOverride ?? manifest.name,
+      description: manifest.description ?? '',
+      code: strategyCode,
+      mock_data: JSON.stringify(mock_data),
+      mock_rounds,
+    };
+  };
+
+  const [examplesGalleryOpen, setExamplesGalleryOpen] = useState(false);
+  const [loadingExampleFile, setLoadingExampleFile] = useState<string | null>(null);
+
+  const loadExampleGame = async (file: string, name: string) => {
+    if (languageGames.some(g => g.name === name)) {
+      // Already loaded — just open the games tab
+      setActiveTab('games');
+      setExamplesGalleryOpen(false);
+      return;
+    }
+    setLoadingExampleFile(file);
+    try {
+      const res = await fetch(`/examples/${file}`);
+      const blob = await res.blob();
+      const gameData = await parseExampleZip(blob);
+      const postRes = await fetch('/api/language-games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...gameData, id: Date.now(), created_at: new Date().toISOString() }),
+      });
+      if (postRes.ok) {
+        // Also save ZIP to IndexedDB so assets can be mounted when running the strategy
+        await saveGame(gameData.name, blob);
+        await fetchAndSetGames();
+        setExamplesGalleryOpen(false);
+        setActiveTab('games');
+      }
+    } catch (err) {
+      console.error('Failed to load example', err);
+    } finally {
+      setLoadingExampleFile(null);
+    }
+  };
+
+  const remixExampleGame = async (file: string, name: string) => {
+    setLoadingExampleFile(file);
+    try {
+      const res = await fetch(`/examples/${file}`);
+      const blob = await res.blob();
+      const remixName = `${name} (Remix)`;
+      const gameData = await parseExampleZip(blob, remixName);
+      const postRes = await fetch('/api/language-games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...gameData, id: Date.now(), created_at: new Date().toISOString() }),
+      });
+      if (postRes.ok) {
+        // Save ZIP to IndexedDB under the remix name for asset mounting
+        await saveGame(remixName, blob);
+        const games = await fetchAndSetGames();
+        const remixed = games.find((g: LanguageGame) => g.name === remixName);
+        if (remixed) setEditingGame(remixed);
+        setExamplesGalleryOpen(false);
+        setActiveTab('games');
+      }
+    } catch (err) {
+      console.error('Failed to remix example', err);
+    } finally {
+      setLoadingExampleFile(null);
     }
   };
 
@@ -493,6 +608,8 @@ export default function App() {
     }
 
     pyodideService.run(selectedFile.content);
+    // Send initial orientation so strategies that wait for on_change can display immediately
+    setTimeout(() => pyodideService.setOrientation(1, 6), 300);
   };
 
   const stopCurrentCode = () => {
@@ -776,24 +893,29 @@ export default function App() {
       const fileSummary = files.map(f => `File: ${f.path}\nContent:\n${f.content.slice(0, 1000)}...`).join('\n\n');
       
       const prompt = `
-        You are an expert embedded systems and game developer. 
-        I have uploaded a project for a 6-sided LCD dice called "DiceMaster" (https://github.com/DanielHou315/DiceMaster). 
-        Alfonso (the user) wants to analyze this code and create more mini-games for it.
-        
-        The DiceMaster architecture typically uses:
-        - A Raspberry Pi running ROS2 as the "Central" controller.
-        - ESP32-based screens.
-        - A "Strategy" pattern for games (BaseStrategy).
-        - Motion detection (shaking/rotation) via IMU messages.
-        
+        You are an expert game developer for the DiceMaster platform — a 6-sided LCD dice.
+        Before answering, read the game creation docs and API reference at:
+        https://github.com/DanielHou315/DiceMaster_Central_Web
+
+        The dice SDK ("dice" package) provides these modules:
+        - dice.screen: set_text(id, path), set_image(id, path), set_gif(id, path)
+        - dice.motion: on_shake(fn), is_shaking(), shake_intensity()
+        - dice.orientation: on_change(fn), top(), bottom()
+        - dice.timer: set(interval, fn), once(delay, fn), cancel(id)
+        - dice.assets: get(name), list_all()
+        - dice.log: log(message)
+        - dice.strategy: BaseStrategy (abstract: start_strategy(), stop_strategy())
+
+        Games must subclass BaseStrategy. Screen IDs are 1-6.
+
         Here are the project files:
         ${fileSummary}
-        
+
         Please:
         1. Analyze the current architecture and how games are implemented in this specific codebase.
         2. Suggest 3-5 creative mini-game ideas that would work well on a 6-sided LCD dice (small screen, limited input).
-        3. Provide technical advice on how to improve the existing codebase for better modularity or performance, specifically keeping compatibility with the official DiceMaster repository.
-        
+        3. Provide technical advice on how to improve the existing codebase for better modularity or performance, specifically keeping compatibility with the dice SDK documented at DiceMaster_Central_Web.
+
         Format your response in clear Markdown.
       `;
 
@@ -846,31 +968,38 @@ export default function App() {
       else userRequest = gamePrompt || 'Create a creative language learning game.';
 
       const prompt = `
-        You are an expert embedded systems developer. Create a new "Language Learning Mini-Game" for a 6-sided LCD dice.
-        The game should be compatible with the "DiceMaster" project (https://github.com/DanielHou315/DiceMaster).
-        
-        The DiceMaster architecture typically uses:
-        - A Raspberry Pi running ROS2 as the "Central" controller.
-        - ESP32-based screens.
-        - A "Strategy" pattern for games (BaseStrategy).
-        - Motion detection (shaking/rotation) via IMU messages.
-        
+        You are an expert game developer for the DiceMaster platform — a 6-sided LCD dice.
+        Before writing code, read the game creation docs and API reference at:
+        https://github.com/DanielHou315/DiceMaster_Central_Web
+
+        The dice SDK ("dice" package) provides these modules:
+        - dice.screen: set_text(id, path), set_image(id, path), set_gif(id, path)
+        - dice.motion: on_shake(fn), is_shaking(), shake_intensity()
+        - dice.orientation: on_change(fn), top(), bottom()
+        - dice.timer: set(interval, fn), once(delay, fn), cancel(id)
+        - dice.assets: get(name), list_all()
+        - dice.log: log(message)
+        - dice.strategy: BaseStrategy (abstract: start_strategy(), stop_strategy())
+
+        Games must subclass BaseStrategy. Screen IDs are 1-6.
+
+        Create a new "Language Learning Mini-Game" for this 6-sided LCD dice.
+
         User's specific request for this game:
         "${userRequest}"
-        
+
         Project Context:
         ${fileSummary}
-        
+
         Output a JSON object with:
         - name: Short catchy name
         - description: How to play
         - readme: A detailed Markdown README with "How to Play" and "How to Add More Content" sections.
-        - code: The Python code for the game. 
-          IMPORTANT: 
-          1. If the project context shows a ROS2 strategy pattern, follow it exactly. 
-          2. If it shows a MicroPython/M5Stack pattern, follow that.
-          3. Put the game's vocabulary/rounds in a clearly defined Python list named "GAME_ROUNDS" at the top of the code.
-        - mock_data: A JSON object representing the initial 6 screens for the simulator. 
+        - code: The Python code for the game.
+          IMPORTANT:
+          1. Always use the BaseStrategy pattern from the dice SDK.
+          2. Put the game's vocabulary/rounds in a clearly defined Python list named "GAME_ROUNDS" at the top of the code.
+        - mock_data: A JSON object representing the initial 6 screens for the simulator.
           Format: {"top": {"type": "text" | "image", "content": "..."}, "bottom": ..., "front": ..., "back": ..., "left": ..., "right": ...}
         - mock_rounds: A JSON array of JSON strings, where each string represents the state of the 6 screens for a round (e.g., when shaken).
           Provide exactly 10 rounds for testing.
@@ -1009,6 +1138,12 @@ export default function App() {
       setScreens(resolveScreens(mockData));
       setActiveGame(game);
       setCurrentRound(-1); // -1 means initial state
+      // Make the game's code available for "Run" and point asset mounting at this game
+      setCurrentGameName(game.name);
+      if (game.code) {
+        const slug = game.name.toLowerCase().replace(/\s+/g, '_');
+        setSelectedFile({ path: `games/${slug}.py`, content: game.code });
+      }
       setActiveTab('simulator');
     } catch (err) {
       console.error("Invalid mock data", err);
@@ -1945,6 +2080,16 @@ export default function App() {
             setActiveTab('editor');
           }}
           onInjectFeatured={() => injectFeaturedGame(languageGames)}
+          onOpenExamples={() => setExamplesGalleryOpen(true)}
+        />
+      )}
+
+      {examplesGalleryOpen && (
+        <ExamplesGallery
+          onClose={() => setExamplesGalleryOpen(false)}
+          onLoad={loadExampleGame}
+          onRemix={remixExampleGame}
+          loadingFile={loadingExampleFile}
         />
       )}
 

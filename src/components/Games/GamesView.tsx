@@ -23,6 +23,7 @@ interface GamesViewProps {
   onAddAllToEditor: () => void;
   onViewCode: (game: LanguageGame) => void;
   onInjectFeatured: () => void;
+  onOpenExamples: () => void;
 }
 
 export const GamesView: React.FC<GamesViewProps> = ({
@@ -43,7 +44,8 @@ export const GamesView: React.FC<GamesViewProps> = ({
   onUploadPy,
   onAddAllToEditor,
   onViewCode,
-  onInjectFeatured
+  onInjectFeatured,
+  onOpenExamples,
 }) => {
   const zipInputRef = React.useRef<HTMLInputElement>(null);
   const pyInputRef = React.useRef<HTMLInputElement>(null);
@@ -78,12 +80,12 @@ export const GamesView: React.FC<GamesViewProps> = ({
           />
           
           <button
-            onClick={onInjectFeatured}
+            onClick={onOpenExamples}
             className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
-            title="Load official examples from DiceMaster repository"
+            title="Browse and load example games"
           >
             <Sparkles className="w-3 h-3" />
-            Load Official
+            Examples
           </button>
 
           <button

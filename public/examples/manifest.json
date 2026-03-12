@@ -1,0 +1,233 @@
+[
+  {
+    "file": "animal_idiom_atlas.zip",
+    "name": "Animal Idiom Atlas",
+    "description": "Discover how different cultures use animals in their daily expressions.",
+    "strategy_name": "animalidiomatlas",
+    "version": "1.0.0"
+  },
+  {
+    "file": "chinese_quizlet.zip",
+    "name": "Chinese Quizlet",
+    "description": "Learn Chinese characters by matching images to words",
+    "strategy_name": "shake_quizlet",
+    "version": "1.0"
+  },
+  {
+    "file": "chinese_quizlet_official.zip",
+    "name": "Chinese Quizlet (Official)",
+    "description": "Advanced multi-screen game. Shake to cycle through vocabulary cards with image hints.",
+    "strategy_name": "chinesequizlet",
+    "version": "1.0.0"
+  },
+  {
+    "file": "cognate_chaos.zip",
+    "name": "Cognate Chaos",
+    "description": "A linguistic trap-detection game. Identify 'True Cognates' versus 'False Friends'.",
+    "strategy_name": "cognatechaos",
+    "version": "1.0.0"
+  },
+  {
+    "file": "compound_conqueror.zip",
+    "name": "Compound Conqueror",
+    "description": "Deconstruct the world's most creative compound words.",
+    "strategy_name": "compoundconqueror",
+    "version": "1.0.0"
+  },
+  {
+    "file": "conjudice_spanish.zip",
+    "name": "ConjuDice Spanish",
+    "description": "A Spanish verb conjugation game. Shake to get a new verb and subject pronoun.",
+    "strategy_name": "conjudicespanish",
+    "version": "1.0.0"
+  },
+  {
+    "file": "dialect_detective.zip",
+    "name": "Dialect Detective",
+    "description": "A cross-cultural vocabulary game that explores how a single language varies.",
+    "strategy_name": "dialectdetective",
+    "version": "1.0.0"
+  },
+  {
+    "file": "dialectduel_slang_quest.zip",
+    "name": "DialectDuel: Slang Quest",
+    "description": "A high-speed cultural immersion game where players learn regional slang, idioms, and informal expressions.",
+    "strategy_name": "dialectduelslangquest",
+    "version": "1.0.0"
+  },
+  {
+    "file": "ecolingua_natures_idioms.zip",
+    "name": "Eco-Lingua: Nature's Idioms",
+    "description": "Discover how different cultures use animals, plants, and weather to describe human behavior.",
+    "strategy_name": "ecolinguanaturesidioms",
+    "version": "1.0.0"
+  },
+  {
+    "file": "false_friend_finder.zip",
+    "name": "False Friend Finder",
+    "description": "A linguistic detective game where you discover 'False Friends'\u2014words that look or sound the same in different languages but have completely different meanings.",
+    "strategy_name": "false_friend_finder",
+    "version": "1.0.0"
+  },
+  {
+    "file": "gastronomy_globe_the_flavor_finder.zip",
+    "name": "Gastronomy Globe: The Flavor Finder",
+    "description": "Explore global cuisine while learning food-related vocabulary. Each face of the dice provides a different culinary clue: language of origin, category, and a descriptive 'tasting note'. Shake the dice to reveal the English translation.",
+    "strategy_name": "gastronomy_globe_the_flavor_finder",
+    "version": "1.0.0"
+  },
+  {
+    "file": "gender_gladiator_the_article_arena.zip",
+    "name": "Gender Gladiator: The Article Arena",
+    "description": "A fast-paced training game to master grammatical genders (Masculine, Feminine, Neuter) in German, French, and Spanish. Shake to reveal a new noun and its linguistic secrets.",
+    "strategy_name": "gender_gladiator_the_article_arena",
+    "version": "1.0.0"
+  },
+  {
+    "file": "hanzi_hero_visual_chinese.zip",
+    "name": "Hanzi Hero: Visual Chinese",
+    "description": "A creative language learning game for the DiceMaster that teaches Chinese characters (Hanzi) through a multi-sensory approach. Each face of the dice reveals a different aspect of the character: its visual form, pronunciation, meaning, usage, and category.",
+    "strategy_name": "hanzi_hero_visual_chinese",
+    "version": "1.0.0"
+  },
+  {
+    "file": "honorific_hero.zip",
+    "name": "Honorific Hero",
+    "description": "Master the art of social levels! This game teaches you how to address different people across various languages using correct honorifics and formality levels.",
+    "strategy_name": "honorific_hero",
+    "version": "1.0.0"
+  },
+  {
+    "file": "idiom_explorer.zip",
+    "name": "Idiom Explorer",
+    "description": "Discover the weird and wonderful world of figurative language. Shake the dice to see a literal idiom, its country of origin, the actual meaning, and how it's used in its native tongue.",
+    "strategy_name": "idiom_explorer",
+    "version": "1.0.0"
+  },
+  {
+    "file": "katakana_keep_up.zip",
+    "name": "Katakana Keep-Up",
+    "description": "Unlock the secrets of 'Wasei-eigo' (Japanese-made English). Shake the dice to see a Katakana word, then rotate it to reveal its English origin, its real meaning, and its category.",
+    "strategy_name": "katakana_keep_up",
+    "version": "1.0.0"
+  },
+  {
+    "file": "lexiquest_verb_voyager.zip",
+    "name": "LexiQuest: Verb Voyager",
+    "description": "A high-stakes conjugation trainer. Match the verb, pronoun, and tense shown on the dice faces, then shake to reveal the correct translation and form.",
+    "strategy_name": "lexiquest_verb_voyager",
+    "version": "1.0.0"
+  },
+  {
+    "file": "lingoloom.zip",
+    "name": "LingoLoom",
+    "description": "A rapid-fire language immersion game where you match vocabulary across dice faces. Shake the dice to reveal translations and advance to the next challenge.",
+    "strategy_name": "lingoloom",
+    "version": "1.0.0"
+  },
+  {
+    "file": "loanword_labyrinth.zip",
+    "name": "Loanword Labyrinth",
+    "description": "Discover the surprising global origins of everyday English words by shaking the dice to reveal their etymological history across all six screens.",
+    "strategy_name": "loanwordlabyrinth",
+    "version": "1.0.0"
+  },
+  {
+    "file": "onomato_peia_sounds_of_the_world.zip",
+    "name": "Onomato-Peia: Sounds of the World",
+    "description": "Discover how different cultures describe the sounds around them, from animal noises to everyday objects.",
+    "strategy_name": "onomatopeiasoundsoftheworld",
+    "version": "1.0.0"
+  },
+  {
+    "file": "onomatopoeia_odyssey.zip",
+    "name": "Onomatopoeia Odyssey",
+    "description": "Discover how different cultures hear the world! Shake the dice to see how a single sound (like a dog barking or a sneeze) is transcribed in six different languages.",
+    "strategy_name": "onomatopoeiaodyssey",
+    "version": "1.0.0"
+  },
+  {
+    "file": "pie_portal_ancestors_whisper.zip",
+    "name": "PIE Portal: The Ancestor's Whisper",
+    "description": "Trace the 'DNA' of language back 5,000 years! This game turns your DiceMaster into a linguistic time machine, showing how a single Proto-Indo-European (PIE) root evolved into common words across English, Latin, Greek, and Sanskrit.",
+    "strategy_name": "pieportalancestorswhisper",
+    "version": "1.0.0"
+  },
+  {
+    "file": "polyglot_palette_idiom_odyssey.zip",
+    "name": "Polyglot Palette: Idiom Odyssey",
+    "description": "Master colorful idioms from around the world. Each face of the dice reveals a different layer of a color-based expression\u2014from its literal meaning to its cultural context\u2014until you shake it to reveal the true English equivalent.",
+    "strategy_name": "polyglotpaletteidiomodyssey",
+    "version": "1.0.0"
+  },
+  {
+    "file": "polyglot_pulse.zip",
+    "name": "Polyglot Pulse",
+    "description": "A high-speed language vocabulary trainer. The top face shows a word in a foreign language (Spanish), while the sides provide phonetic hints, grammatical context, and example sentences. Shake to reveal the answer on the bottom face and advance to the next challenge.",
+    "strategy_name": "polyglotpulse",
+    "version": "1.0.0"
+  },
+  {
+    "file": "portmanteau_lab_lexical_alchemist.zip",
+    "name": "Portmanteau Lab: The Lexical Alchemist",
+    "description": "Discover the hidden chemistry of language by deconstructing portmanteaus\u2014words formed by blending the sounds and meanings of two other words.",
+    "strategy_name": "portmanteaulablexicalalchemist",
+    "version": "1.0.0"
+  },
+  {
+    "file": "proverb_pathfinder.zip",
+    "name": "Proverb Pathfinder",
+    "description": "A cross-cultural journey through ancient wisdom. Each shake reveals a unique proverb from around the world, its literal meaning, and its English equivalent.",
+    "strategy_name": "proverb_pathfinder",
+    "version": "1.0.0"
+  },
+  {
+    "file": "root_runner_the_etymology_engine.zip",
+    "name": "Root Runner: The Etymology Engine",
+    "description": "A language learning game focused on Greek and Latin roots. Shake the dice to discover a root and its descendants across English, Spanish, French, and German.",
+    "strategy_name": "root_runner_the_etymology_engine",
+    "version": "1.0.0"
+  },
+  {
+    "file": "rusconju_master.zip",
+    "name": "RusConju Master",
+    "description": "A Russian verb conjugation trainer that uses all 6 sides of the DiceMaster to teach infinitive forms, subject pronouns, translations, and tenses.",
+    "strategy_name": "rusconju_master",
+    "version": "1.0.0"
+  },
+  {
+    "file": "semantic_shift_the_chrono_linguist.zip",
+    "name": "Semantic Shift: The Chrono-Linguist",
+    "description": "Discover how English words have completely changed their meanings over centuries. Shake to reveal a word's modern definition versus its surprising historical origin.",
+    "strategy_name": "semantic_shift_the_chrono_linguist",
+    "version": "1.0.0"
+  },
+  {
+    "file": "slang_slinger_the_global_vernacular.zip",
+    "name": "Slang Slinger: The Global Vernacular",
+    "description": "Unlock the world's most colorful local expressions! Shake the dice to discover slang from different regions, languages, and subcultures. Learn what they mean, where they come from, and how to use them without sounding like a tourist.",
+    "strategy_name": "slang_slinger_the_global_vernacular",
+    "version": "1.0.0"
+  },
+  {
+    "file": "syntax_sorcerer_the_word_order_wizard.zip",
+    "name": "Syntax Sorcerer: The Word Order Wizard",
+    "description": "Master the logic of global sentence structures. Learn how different languages arrange Subjects, Verbs, and Objects (SVO, SOV, VSO) by shaking the dice to reveal a new linguistic puzzle.",
+    "strategy_name": "syntax_sorcerer_the_word_order_wizard",
+    "version": "1.0.0"
+  },
+  {
+    "file": "the_polyglots_palette.zip",
+    "name": "The Polyglot's Palette",
+    "description": "Explore the vibrant world of color-based idioms from across the globe. Each shake reveals how different cultures use colors to describe emotions, situations, and people.",
+    "strategy_name": "the_polyglots_palette",
+    "version": "1.0.0"
+  },
+  {
+    "file": "untranslatable_odyssey.zip",
+    "name": "Untranslatable Odyssey",
+    "description": "Discover words from around the world that have no direct English translation, turning your dice into a portal for deep cultural concepts.",
+    "strategy_name": "untranslatable_odyssey",
+    "version": "1.0.0"
+  }
+]
