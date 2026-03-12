@@ -1,9 +1,23 @@
 export type SimStatus = "loading" | "ready" | "running" | "stopped" | "error";
 
+/** Mirrors hardware TextEntry from TextGroup JSON */
+export interface TextEntry {
+  x?: number;         // x_cursor (0-479), default 0
+  y?: number;         // y_cursor (0-479), default 0
+  x_cursor?: number;  // alias
+  y_cursor?: number;  // alias
+  font_id?: number;   // 0-5
+  font_name?: string; // "tf"|"arabic"|"chinese"|"cyrillic"|"devanagari"
+  font_color?: string | number; // RGB565 hex "0xFFFF" or int
+  text?: string;
+}
+
 export type ScreenMessage = {
   type: "screen.set_text" | "screen.set_image" | "screen.set_gif";
   screen_id: number;
   path: string;
+  texts?: TextEntry[];         // Structured text entries from TextGroup JSON
+  bg_color?: string | number;  // Background color RGB565
 };
 
 export type LogMessage = { type: "log"; message: string };
@@ -57,6 +71,18 @@ class PyodideService {
 
   shake(intensity = 0.7): void {
     this.worker?.postMessage({ type: "motion.shake", intensity });
+  }
+
+  mountAssets(files: Map<string, Uint8Array>): void {
+    // Convert to transferable ArrayBuffers
+    const entries: [string, ArrayBuffer][] = [];
+    const transfers: ArrayBuffer[] = [];
+    for (const [path, data] of files) {
+      const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+      entries.push([path, buf]);
+      transfers.push(buf);
+    }
+    this.worker?.postMessage({ type: "mountAssets", files: entries }, transfers);
   }
 
   setOrientation(top: number, bottom: number): void {

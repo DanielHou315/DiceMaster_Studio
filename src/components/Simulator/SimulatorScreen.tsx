@@ -1,11 +1,23 @@
 import React from 'react';
+import { ScreenContent, HWTextEntry } from '../../types';
+
+/**
+ * Hardware screen scale: 2D sim squares are ~160px, real screen is 480px.
+ * We use a relative approach — percentage-based positioning.
+ */
+const HW_RES = 480;
+const FONT_SIZES: Record<number, number> = {
+  0: 0,    // NOTEXT
+  1: 16,   // TF (unifont)
+  2: 16,   // ARABIC
+  3: 16,   // CHINESE
+  4: 12,   // CYRILLIC (cu12)
+  5: 16,   // DEVANAGARI
+};
 
 interface SimulatorScreenProps {
   face: string;
-  data: {
-    type: 'text' | 'image';
-    content: string;
-  };
+  data: ScreenContent;
 }
 
 export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) => {
@@ -14,18 +26,51 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
       <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
         {face}
       </div>
-      <div className="w-full aspect-square bg-black rounded-2xl border-4 border-zinc-800 shadow-2xl overflow-hidden flex items-center justify-center p-4 ring-1 ring-white/5 group-hover:border-emerald-500/50 transition-colors duration-500">
+      <div
+        className="w-full aspect-square rounded-2xl border-4 border-zinc-800 shadow-2xl overflow-hidden relative ring-1 ring-white/5 group-hover:border-emerald-500/50 transition-colors duration-500 select-none"
+        style={{ backgroundColor: data.bgColor || '#000000' }}
+      >
         {data.type === 'image' ? (
-          <img 
-            src={data.content} 
-            alt={face} 
-            className="w-full h-full object-cover rounded-lg"
+          <img
+            src={data.content}
+            alt={face}
+            className="w-full h-full object-cover rounded-lg pointer-events-none"
             referrerPolicy="no-referrer"
+            draggable={false}
             onError={(e) => (e.currentTarget.src = 'https://picsum.photos/seed/error/480/480')}
           />
+        ) : data.textEntries ? (
+          /* Hardware-accurate positioned text rendering */
+          <div className="absolute inset-0">
+            {data.textEntries.map((entry, i) => {
+              const fontPx = FONT_SIZES[entry.fontId] || 16;
+              return (
+                <span
+                  key={i}
+                  className="absolute whitespace-pre leading-tight"
+                  style={{
+                    left: `${(entry.x / HW_RES) * 100}%`,
+                    top: `${(entry.y / HW_RES) * 100}%`,
+                    fontSize: `${(fontPx / HW_RES) * 100}cqi`,
+                    color: entry.fontColor,
+                    fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
+                      : entry.fontId === 2 ? '"Noto Sans Arabic", sans-serif'
+                      : entry.fontId === 4 ? '"Noto Sans", sans-serif'
+                      : entry.fontId === 5 ? '"Noto Sans Devanagari", sans-serif'
+                      : 'monospace',
+                  }}
+                >
+                  {entry.text}
+                </span>
+              );
+            })}
+          </div>
         ) : (
-          <div className="text-emerald-400 font-mono text-center break-all text-xs leading-tight">
-            {data.content}
+          /* Fallback plain text */
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="text-emerald-400 font-mono text-center break-all text-xs leading-tight">
+              {data.content}
+            </div>
           </div>
         )}
         {/* LCD Glare Effect */}

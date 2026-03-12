@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Layout, Play, FileUp, Github, RotateCw, Smartphone, Loader2, Info, ChevronDown, ChevronUp, BookOpen, Sparkles, Edit3, Database, Wand2, List } from 'lucide-react';
+import { Layout, Play, Square, FileUp, Github, RotateCw, Smartphone, Loader2, Info, ChevronDown, ChevronUp, BookOpen, Sparkles, Edit3, Database, Wand2, List, AlertCircle } from 'lucide-react';
+import type { SimStatus } from '../../services/pyodideService';
 import { SimulatorScreen } from './SimulatorScreen';
 import { DiceScreens, LanguageGame, ProjectFile } from '../../types';
 import { cn } from '../../lib/utils';
@@ -9,6 +10,7 @@ interface Simulator2DProps {
   screens: DiceScreens;
   isShaking: boolean;
   isAnalyzing: boolean;
+  pyodideStatus?: SimStatus;
   onRunCurrentCode: () => void;
   onLoadFile: () => void;
   onLoadBaseCode: () => void;
@@ -21,12 +23,14 @@ interface Simulator2DProps {
   onEditInstructions: (path: string) => void;
   onExpandGameData: (game: LanguageGame) => void;
   isExpandingData?: boolean;
+  onStopCode?: () => void;
 }
 
 export const Simulator2D: React.FC<Simulator2DProps> = ({
   screens,
   isShaking,
   isAnalyzing,
+  pyodideStatus,
   onRunCurrentCode,
   onLoadFile,
   onLoadBaseCode,
@@ -38,7 +42,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
   onGenerateInstructions,
   onEditInstructions,
   onExpandGameData,
-  isExpandingData = false
+  isExpandingData = false,
+  onStopCode
 }) => {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'instructions' | 'data' | 'editor'>('instructions');
   const intensity = shakeSensitivity / 50;
@@ -62,14 +67,36 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
           2D Flat Layout Simulation
         </h2>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          <button 
+          <button
             onClick={onRunCurrentCode}
-            className="flex-1 sm:flex-none bg-emerald-500 text-zinc-950 px-6 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            disabled={pyodideStatus !== 'ready' && pyodideStatus !== 'stopped'}
+            className={cn(
+              "flex-1 sm:flex-none px-6 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all",
+              pyodideStatus === 'loading'
+                ? "bg-amber-500/20 text-amber-400 cursor-not-allowed"
+                : pyodideStatus === 'running'
+                ? "bg-blue-500/20 text-blue-400 cursor-not-allowed"
+                : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            )}
           >
-            <Play className="w-4 h-4 fill-current" />
-            Run
+            {pyodideStatus === 'loading' ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
+            ) : pyodideStatus === 'running' ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Running...</>
+            ) : (
+              <><Play className="w-4 h-4 fill-current" /> Run</>
+            )}
           </button>
-          <button 
+          {pyodideStatus === 'running' && (
+            <button
+              onClick={onStopCode}
+              className="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-400 transition-all"
+            >
+              <Square className="w-4 h-4 fill-current" />
+              Stop
+            </button>
+          )}
+          <button
             onClick={onLoadFile}
             className="flex-1 sm:flex-none bg-zinc-800 text-zinc-300 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-zinc-700 transition-all"
           >

@@ -107,19 +107,35 @@ Available APIs:
   timer.once(delay, callback)         — fire once after N seconds
   timer.cancel(timer_id)              — cancel a timer
   log(message)                        — print to console
+
+Screen IDs: 1=top, 2=front, 3=right, 4=back, 5=left, 6=bottom
+
+IMPORTANT: Your code MUST define a class that inherits from BaseStrategy.
 """
 from dice import screen, log, timer
+from dice.strategy import BaseStrategy
 
 
-count = 0
+class HelloStrategy(BaseStrategy):
+    _strategy_name = "hello"
 
-def tick():
-    global count
-    count += 1
-    screen.set_text(1, f"Hello #{count}")
-    log(f"tick {count}")
+    def __init__(self, game_name, config, assets_path, **kwargs):
+        super().__init__(game_name, config, assets_path, **kwargs)
+        self.count = 0
+        self._timer_id = None
 
-timer_id = timer.set(2.0, tick)
-screen.set_text(1, "Starting...")
-log("Game started! Screens will update every 2 seconds.")
+    def start_strategy(self):
+        screen.set_text(1, "Starting...")
+        log("Game started! Screens update every 2 seconds.")
+        self._timer_id = timer.set(2.0, self._tick)
+
+    def stop_strategy(self):
+        if self._timer_id is not None:
+            timer.cancel(self._timer_id)
+        log("Game stopped.")
+
+    def _tick(self):
+        self.count += 1
+        screen.set_text(1, f"Hello #{self.count}")
+        log(f"tick {self.count}")
 `;

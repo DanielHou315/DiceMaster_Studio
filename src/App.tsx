@@ -16,6 +16,7 @@ import { GameCard } from './components/Games/GameCard';
 import { AssetCard } from './components/Assets/AssetCard';
 import { serialService } from './services/serialService';
 import { pyodideService, WorkerMessage, SimStatus } from './services/pyodideService';
+import { loadGame, unpackZip, createBlobURLs, revokeBlobURLs, UnpackedGame } from './services/assetStore';
 import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType } from './types';
 import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, HARDWARE_OPTIMIZER_CODE } from './constants';
 import { Simulator2D } from './components/Simulator/Simulator2D';
@@ -27,6 +28,21 @@ import { AssetsView } from './components/Assets/AssetsView';
 import { SettingsView } from './components/Settings/SettingsView';
 import { cn } from './lib/utils';
 
+/** Convert RGB565 value (int or hex string like "0xFFFF") to CSS rgb() color */
+function rgb565ToCss(value: string | number): string {
+  let v: number;
+  if (typeof value === 'string') {
+    v = parseInt(value, 16);
+  } else {
+    v = value;
+  }
+  if (isNaN(v)) v = 0;
+  const r = ((v >> 11) & 0x1F) * 255 / 31;
+  const g = ((v >> 5) & 0x3F) * 255 / 63;
+  const b = (v & 0x1F) * 255 / 31;
+  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
 const SCREEN_ID_TO_FACE: Record<number, string> = {
   1: 'top',
   2: 'front',
@@ -37,7 +53,8 @@ const SCREEN_ID_TO_FACE: Record<number, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('sim2d');
+  const [activeTab, setActiveTab] = useState<TabType>('simulator');
+  const [simMode, setSimMode] = useState<'2d' | '3d'>('2d');
   const [simView, setSimView] = useState<'2d' | '3d' | 'split'>('split');
   const [isShaking, setIsShaking] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -92,6 +109,8 @@ export default function App() {
   const [hasWebGL, setHasWebGL] = useState(true);
   const [engineType, setEngineType] = useState<'webgl' | 'css' | 'canvas'>('css');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const assetBlobURLsRef = useRef<Map<string, string>>(new Map());
+  const [currentGameName, setCurrentGameName] = useState<string | null>(null);
 
   // Settings State
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -128,11 +147,34 @@ export default function App() {
         case 'screen.set_gif': {
           const face = SCREEN_ID_TO_FACE[msg.screen_id];
           if (face) {
-            const contentType = msg.type === 'screen.set_text' ? 'text' : 'image';
-            setScreens(prev => ({
-              ...prev,
-              [face]: { type: contentType, content: msg.path }
-            }));
+            if (msg.type === 'screen.set_text' && msg.texts) {
+              // Structured TextGroup from worker — mirror hardware rendering
+              const FONT_NAME_TO_ID: Record<string, number> = {
+                notext: 0, tf: 1, arabic: 2, chinese: 3, cyrillic: 4, devanagari: 5
+              };
+              const textEntries = (msg.texts as any[]).map((t: any) => ({
+                x: t.x ?? t.x_cursor ?? 0,
+                y: t.y ?? t.y_cursor ?? 0,
+                fontId: t.font_id ?? (t.font_name ? (FONT_NAME_TO_ID[t.font_name.toLowerCase()] ?? 1) : 1),
+                fontColor: rgb565ToCss(t.font_color ?? '0xFFFF'),
+                text: t.text ?? '',
+              }));
+              const bgColor = rgb565ToCss(msg.bg_color ?? '0x0000');
+              const displayText = textEntries.map(e => e.text).join('\n');
+              setScreens(prev => ({
+                ...prev,
+                [face]: { type: 'text', content: displayText, textEntries, bgColor }
+              }));
+            } else {
+              // Image or fallback
+              let content = msg.path;
+              const blobUrl = assetBlobURLsRef.current.get(content);
+              if (blobUrl) content = blobUrl;
+              setScreens(prev => ({
+                ...prev,
+                [face]: { type: 'image', content }
+              }));
+            }
           }
           break;
         }
@@ -141,6 +183,7 @@ export default function App() {
     return () => {
       unsubscribe();
       pyodideService.destroy();
+      revokeBlobURLs(assetBlobURLsRef.current);
     };
   }, []);
 
@@ -424,11 +467,46 @@ export default function App() {
       left: { type: 'text', content: '' },
       right: { type: 'text', content: '' },
     });
-    if (activeTab !== 'sim2d' && activeTab !== 'sim3d') {
-      setActiveTab('sim2d');
+    if (activeTab !== 'simulator' && activeTab !== 'sim2d' && activeTab !== 'sim3d') {
+      setActiveTab('simulator');
     }
+
+    // Revoke old blob URLs
+    revokeBlobURLs(assetBlobURLsRef.current);
+    assetBlobURLsRef.current = new Map();
+
+    // If a game is loaded, mount its assets into Pyodide FS
+    if (currentGameName) {
+      try {
+        const zipBlob = await loadGame(currentGameName);
+        if (zipBlob) {
+          const unpacked = await unpackZip(zipBlob);
+          // Mount asset files into worker's emscripten FS
+          // Paths from unpackZip already include "assets/" prefix
+          pyodideService.mountAssets(unpacked.files);
+          // Create blob URLs for image resolution
+          assetBlobURLsRef.current = createBlobURLs(unpacked.files);
+        }
+      } catch (err) {
+        console.error('Failed to mount game assets:', err);
+      }
+    }
+
     pyodideService.run(selectedFile.content);
   };
+
+  const stopCurrentCode = () => {
+    pyodideService.stop();
+  };
+
+  const pyodideStatusRef = useRef(pyodideStatus);
+  pyodideStatusRef.current = pyodideStatus;
+
+  const handleOrientationChange = useCallback((top: number, bottom: number) => {
+    if (pyodideStatusRef.current === 'running') {
+      pyodideService.setOrientation(top, bottom);
+    }
+  }, []);
 
   // Simulator State
   const [screens, setScreens] = useState<DiceScreens>({
@@ -931,7 +1009,7 @@ export default function App() {
       setScreens(resolveScreens(mockData));
       setActiveGame(game);
       setCurrentRound(-1); // -1 means initial state
-      setActiveTab('sim2d');
+      setActiveTab('simulator');
     } catch (err) {
       console.error("Invalid mock data", err);
       setError("Failed to parse game mock data.");
@@ -1333,6 +1411,37 @@ export default function App() {
         className="max-w-6xl w-full text-center mb-6 relative"
       >
         <div className="absolute right-0 top-0 hidden md:flex items-center gap-3">
+          {/* Pyodide Status */}
+          {pyodideStatus === 'loading' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 text-xs font-bold animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Python Loading...
+            </div>
+          )}
+          {pyodideStatus === 'ready' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 text-xs font-bold">
+              <CheckCircle2 className="w-3 h-3" />
+              Python Ready
+            </div>
+          )}
+          {pyodideStatus === 'running' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 text-xs font-bold">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Running...
+            </div>
+          )}
+          {pyodideStatus === 'stopped' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-500/10 text-zinc-400 rounded-xl border border-zinc-500/20 text-xs font-bold">
+              <CheckCircle2 className="w-3 h-3" />
+              Stopped
+            </div>
+          )}
+          {pyodideStatus === 'error' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 text-xs font-bold">
+              <AlertCircle className="w-3 h-3" />
+              Error
+            </div>
+          )}
           {isUsbConnected ? (
             <button 
               onClick={disconnectUsb}
@@ -1401,25 +1510,15 @@ export default function App() {
             <Code2 className="w-4 h-4" />
             Code Editor
           </button>
-          <button 
-            onClick={() => setActiveTab('sim2d')}
+          <button
+            onClick={() => setActiveTab('simulator')}
             className={cn(
               "px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2",
-              activeTab === 'sim2d' ? "bg-emerald-500 text-zinc-950" : "text-zinc-400 hover:text-white"
+              activeTab === 'simulator' ? "bg-emerald-500 text-zinc-950" : "text-zinc-400 hover:text-white"
             )}
           >
-            <Layout className="w-4 h-4" />
-            2D Simulator
-          </button>
-          <button 
-            onClick={() => setActiveTab('sim3d')}
-            className={cn(
-              "px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2",
-              activeTab === 'sim3d' ? "bg-emerald-500 text-zinc-950" : "text-zinc-400 hover:text-white"
-            )}
-          >
-            <Box className="w-4 h-4" />
-            3D Simulator
+            <Dice6 className="w-4 h-4" />
+            Simulator
           </button>
           <button 
             onClick={() => setActiveTab('games')}
@@ -1449,7 +1548,7 @@ export default function App() {
             )}
           >
             <History className="w-4 h-4" />
-            Log ({logs.length})
+            Log ({consoleLogs.length})
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
@@ -1728,13 +1827,14 @@ export default function App() {
       )}
 
       {activeTab === 'editor' && (
-        <CodeEditor 
+        <CodeEditor
           files={files}
           selectedFile={selectedFile}
           isFlashing={isFlashing}
           isSaving={isSaving}
           saveStatus={saveStatus === 'success' ? 'success' : 'idle'}
           isUsbConnected={isUsbConnected}
+          pyodideStatus={pyodideStatus}
           onFileSelect={setSelectedFile}
           onRunCurrentCode={runCurrentCode}
           onFlashCode={flashCode}
@@ -1760,44 +1860,66 @@ export default function App() {
         />
       )}
 
-      {activeTab === 'sim2d' && (
-        <Simulator2D 
-          screens={screens}
-          isShaking={isShaking}
-          isAnalyzing={isAnalyzing}
-          onRunCurrentCode={runCurrentCode}
-          onLoadFile={() => fileInputRef.current?.click()}
-          onLoadBaseCode={loadGitHubCode}
-          onShakeDice={shakeDice}
-          onUpdateScreen={updateScreen}
-          shakeSensitivity={shakeSensitivity}
-          activeGame={activeGame}
-          files={files}
-          onGenerateInstructions={generateGameInstructions}
-          onEditInstructions={editInstructions}
-          onExpandGameData={expandGameData}
-          isExpandingData={isExpandingData}
-        />
-      )}
+      {activeTab === 'simulator' && (
+        <>
+          {/* 2D/3D Toggle */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className={cn("text-sm font-medium", simMode === '2d' ? "text-emerald-400" : "text-zinc-500")}>2D</span>
+            <button
+              onClick={() => setSimMode(simMode === '2d' ? '3d' : '2d')}
+              className="relative w-12 h-6 rounded-full bg-zinc-700 transition-colors"
+            >
+              <div className={cn(
+                "absolute top-0.5 w-5 h-5 rounded-full bg-emerald-500 transition-transform",
+                simMode === '3d' ? "translate-x-6" : "translate-x-0.5"
+              )} />
+            </button>
+            <span className={cn("text-sm font-medium", simMode === '3d' ? "text-emerald-400" : "text-zinc-500")}>3D</span>
+          </div>
 
-      {activeTab === 'sim3d' && (
-        <Simulator3DContainer 
-          screens={screens}
-          isShaking={isShaking}
-          isAnalyzing={isAnalyzing}
-          onRunCurrentCode={runCurrentCode}
-          onLoadFile={() => fileInputRef.current?.click()}
-          onLoadBaseCode={loadGitHubCode}
-          onShakeDice={shakeDice}
-          onUpdateScreen={updateScreen}
-          shakeSensitivity={shakeSensitivity}
-          activeGame={activeGame}
-          files={files}
-          onGenerateInstructions={generateGameInstructions}
-          onEditInstructions={editInstructions}
-          onExpandGameData={expandGameData}
-          isExpandingData={isExpandingData}
-        />
+          {simMode === '2d' ? (
+            <Simulator2D
+              screens={screens}
+              isShaking={isShaking}
+              isAnalyzing={isAnalyzing}
+              pyodideStatus={pyodideStatus}
+              onRunCurrentCode={runCurrentCode}
+              onLoadFile={() => fileInputRef.current?.click()}
+              onLoadBaseCode={loadGitHubCode}
+              onShakeDice={shakeDice}
+              onUpdateScreen={updateScreen}
+              shakeSensitivity={shakeSensitivity}
+              activeGame={activeGame}
+              files={files}
+              onGenerateInstructions={generateGameInstructions}
+              onEditInstructions={editInstructions}
+              onExpandGameData={expandGameData}
+              isExpandingData={isExpandingData}
+              onStopCode={stopCurrentCode}
+            />
+          ) : (
+            <Simulator3DContainer
+              screens={screens}
+              isShaking={isShaking}
+              isAnalyzing={isAnalyzing}
+              pyodideStatus={pyodideStatus}
+              onRunCurrentCode={runCurrentCode}
+              onLoadFile={() => fileInputRef.current?.click()}
+              onLoadBaseCode={loadGitHubCode}
+              onShakeDice={shakeDice}
+              onUpdateScreen={updateScreen}
+              shakeSensitivity={shakeSensitivity}
+              activeGame={activeGame}
+              files={files}
+              onGenerateInstructions={generateGameInstructions}
+              onEditInstructions={editInstructions}
+              onExpandGameData={expandGameData}
+              isExpandingData={isExpandingData}
+              onOrientationChange={handleOrientationChange}
+              onStopCode={stopCurrentCode}
+            />
+          )}
+        </>
       )}
 
       {activeTab === 'games' && (
@@ -1827,25 +1949,9 @@ export default function App() {
       )}
 
       {activeTab === 'assets' && (
-        <AssetsView 
-          assets={assets}
-          isGenerating={isUploading}
-          assetPrompt={assetPrompt}
-          setAssetPrompt={setAssetPrompt}
-          onGenerateAsset={generateAsset}
-          onUpload={() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e: any) => uploadAsset(e);
-            input.click();
-          }}
-          onDelete={deleteAsset}
-          onCopy={(data) => {
-            navigator.clipboard.writeText(data);
-            setSaveStatus('success');
-            setTimeout(() => setSaveStatus('idle'), 1000);
-          }}
+        <AssetsView
+          currentGameName={currentGameName}
+          onSelectGame={setCurrentGameName}
         />
       )}
 
@@ -1857,24 +1963,22 @@ export default function App() {
           exit={{ opacity: 0 }}
           className="space-y-6"
         >
-          {logs.length === 0 ? (
+          {consoleLogs.length === 0 ? (
             <div className="text-center py-20 glass rounded-3xl">
               <History className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
-              <p className="text-zinc-500">No suggestions logged yet.</p>
+              <p className="text-zinc-500">No console output yet. Run some code to see logs here.</p>
             </div>
           ) : (
-            logs.map((log) => (
-              <div key={log.id} className="glass p-8 rounded-3xl relative group">
-                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-4">
-                  <span className="text-xs font-mono text-zinc-500">
-                    {new Date(log.created_at).toLocaleString()}
-                  </span>
+            <div className="glass rounded-3xl p-4 font-mono text-sm max-h-[600px] overflow-y-auto custom-scrollbar">
+              {consoleLogs.map((line, i) => (
+                <div key={i} className={cn(
+                  "py-1 px-2 border-b border-white/5",
+                  line.startsWith('ERROR:') ? "text-red-400" : "text-zinc-300"
+                )}>
+                  {line}
                 </div>
-                <div className="markdown-body prose prose-invert max-w-none max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                  <Markdown>{log.content}</Markdown>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </motion.div>
       )}

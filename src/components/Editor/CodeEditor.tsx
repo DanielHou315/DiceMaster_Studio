@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { FileCode, Play, Zap, Loader2, Save, Plus, Trash2, Download } from 'lucide-react';
+import { FileCode, Play, Zap, Loader2, Save, Plus, Trash2, Download, AlertCircle } from 'lucide-react';
+import type { SimStatus } from '../../services/pyodideService';
 import Editor from "@monaco-editor/react";
 import { ProjectFile } from '../../types';
 import { cn } from '../../lib/utils';
@@ -12,6 +13,7 @@ interface CodeEditorProps {
   isSaving: boolean;
   saveStatus: 'idle' | 'saving' | 'success';
   isUsbConnected: boolean;
+  pyodideStatus?: SimStatus;
   onFileSelect: (file: ProjectFile) => void;
   onRunCurrentCode: () => void;
   onFlashCode: (code: string) => void;
@@ -31,6 +33,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   isSaving,
   saveStatus,
   isUsbConnected,
+  pyodideStatus,
   onFileSelect,
   onRunCurrentCode,
   onFlashCode,
@@ -109,11 +112,23 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <button
               onClick={onRunCurrentCode}
-              disabled={!selectedFile}
-              className="flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-emerald-500 text-zinc-950 hover:bg-emerald-400 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+              disabled={!selectedFile || (pyodideStatus !== 'ready' && pyodideStatus !== 'stopped')}
+              className={cn(
+                "flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all",
+                pyodideStatus === 'loading'
+                  ? "bg-amber-500/20 text-amber-400 cursor-not-allowed"
+                  : pyodideStatus === 'running'
+                  ? "bg-blue-500/20 text-blue-400 cursor-not-allowed"
+                  : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+              )}
             >
-              <Play className="w-4 h-4 fill-current" />
-              Run
+              {pyodideStatus === 'loading' ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Loading Python...</>
+              ) : pyodideStatus === 'running' ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Running...</>
+              ) : (
+                <><Play className="w-4 h-4 fill-current" /> Run</>
+              )}
             </button>
             <button
               onClick={() => onFlashCode(selectedFile?.content || '')}
