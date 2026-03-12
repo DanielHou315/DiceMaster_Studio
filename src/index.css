@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 font-sans antialiased transition-colors duration-300;
+  }
+  
+  html.light body {
+    @apply bg-zinc-50 text-zinc-900;
+  }
+
+  html.light .bg-zinc-950 { @apply bg-zinc-50; }
+  html.light .bg-zinc-900 { @apply bg-zinc-100; }
+  html.light .bg-zinc-800 { @apply bg-zinc-200; }
+  html.light .text-white { @apply text-zinc-900; }
+  html.light .text-zinc-100 { @apply text-zinc-900; }
+  html.light .text-zinc-300 { @apply text-zinc-700; }
+  html.light .text-zinc-400 { @apply text-zinc-600; }
+  html.light .text-zinc-500 { @apply text-zinc-500; }
+  html.light .border-white\/5 { @apply border-zinc-200; }
+  html.light .border-white\/10 { @apply border-zinc-300; }
+  html.light .from-white { @apply from-zinc-900; }
+  html.light .to-zinc-400 { @apply to-zinc-500; }
+}
+
+.glass {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10;
+}
+
+html.light .glass {
+  @apply bg-white/60 backdrop-blur-xl border border-zinc-200 shadow-sm;
+}
+
+.markdown-body {
+  @apply text-zinc-300 leading-relaxed;
+}
+html.light .markdown-body {
+  @apply text-zinc-600;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  @apply text-zinc-100 font-bold mt-6 mb-4;
+}
+html.light .markdown-body h1, html.light .markdown-body h2, html.light .markdown-body h3 {
+  @apply text-zinc-900;
+}
+.markdown-body p {
+  @apply mb-4;
+}
+.markdown-body code {
+  @apply bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-sm;
+}
+html.light .markdown-body code {
+  @apply bg-zinc-100 text-zinc-900;
+}
+.markdown-body pre {
+  @apply bg-zinc-900 p-4 rounded-lg overflow-x-auto mb-4 border border-white/5;
+}
+html.light .markdown-body pre {
+  @apply bg-zinc-50 border-zinc-200;
+}
+.markdown-body ul {
+  @apply list-disc list-inside mb-4;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotateX(-25deg) rotateY(45deg); }
+  25% { transform: rotateX(-35deg) rotateY(35deg) translate(2px, 2px); }
+  50% { transform: rotateX(-15deg) rotateY(55deg) translate(-2px, -2px); }
+  75% { transform: rotateX(-30deg) rotateY(40deg) translate(2px, -2px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out infinite;
+}
