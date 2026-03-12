@@ -15,6 +15,7 @@ import { SimulatorScreen } from './components/Simulator/SimulatorScreen';
 import { GameCard } from './components/Games/GameCard';
 import { AssetCard } from './components/Assets/AssetCard';
 import { serialService } from './services/serialService';
+import { pyodideService, WorkerMessage, SimStatus } from './services/pyodideService';
 import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType } from './types';
 import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, HARDWARE_OPTIMIZER_CODE } from './constants';
 import { Simulator2D } from './components/Simulator/Simulator2D';
@@ -25,6 +26,15 @@ import { GameContentEditor } from './components/Games/GameContentEditor';
 import { AssetsView } from './components/Assets/AssetsView';
 import { SettingsView } from './components/Settings/SettingsView';
 import { cn } from './lib/utils';
+
+const SCREEN_ID_TO_FACE: Record<number, string> = {
+  1: 'top',
+  2: 'front',
+  3: 'right',
+  4: 'back',
+  5: 'left',
+  6: 'bottom',
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('sim2d');
@@ -51,6 +61,8 @@ export default function App() {
   const [isAnalyzingBreaking, setIsAnalyzingBreaking] = useState(false);
   const [pendingZip, setPendingZip] = useState<File | null>(null);
   const [isUsbConnected, setIsUsbConnected] = useState(false);
+  const [pyodideStatus, setPyodideStatus] = useState<SimStatus>('loading');
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
 
   const connectUsb = async () => {
     const success = await serialService.requestPort();
@@ -96,6 +108,41 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [selectedFile?.content, autoSave]);
+
+  useEffect(() => {
+    pyodideService.init();
+    const unsubscribe = pyodideService.onMessage((msg: WorkerMessage) => {
+      switch (msg.type) {
+        case 'status':
+          setPyodideStatus(msg.status);
+          break;
+        case 'error':
+          setError(msg.message);
+          setConsoleLogs(prev => [...prev, `ERROR: ${msg.message}`]);
+          break;
+        case 'log':
+          setConsoleLogs(prev => [...prev, msg.message]);
+          break;
+        case 'screen.set_text':
+        case 'screen.set_image':
+        case 'screen.set_gif': {
+          const face = SCREEN_ID_TO_FACE[msg.screen_id];
+          if (face) {
+            const contentType = msg.type === 'screen.set_text' ? 'text' : 'image';
+            setScreens(prev => ({
+              ...prev,
+              [face]: { type: contentType, content: msg.path }
+            }));
+          }
+          break;
+        }
+      }
+    });
+    return () => {
+      unsubscribe();
+      pyodideService.destroy();
+    };
+  }, []);
 
   // Apply Theme
   useEffect(() => {
@@ -363,26 +410,24 @@ export default function App() {
 
   const runCurrentCode = async () => {
     if (!selectedFile) return;
-    
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 500);
-    setActiveGame(null); // Clear active game simulation
-
-    // Try to extract mock data from comments
-    const mockMatch = selectedFile.content.match(/#\s*MOCK_SCREENS\s*=\s*({.*})/);
-    if (mockMatch) {
-      try {
-        const mockData = JSON.parse(mockMatch[1]);
-        setScreens(resolveScreens(mockData));
-      } catch (err) {
-        console.error("Failed to parse mock data from file", err);
-      }
+    if (pyodideStatus !== 'ready' && pyodideStatus !== 'stopped') {
+      setError('Python runtime is still loading. Please wait...');
+      return;
     }
-
-    // Ensure we are on a simulator tab
+    setConsoleLogs([]);
+    setError(null);
+    setScreens({
+      top: { type: 'text', content: '' },
+      bottom: { type: 'text', content: '' },
+      front: { type: 'text', content: '' },
+      back: { type: 'text', content: '' },
+      left: { type: 'text', content: '' },
+      right: { type: 'text', content: '' },
+    });
     if (activeTab !== 'sim2d' && activeTab !== 'sim3d') {
       setActiveTab('sim2d');
     }
+    pyodideService.run(selectedFile.content);
   };
 
   // Simulator State
@@ -896,7 +941,10 @@ export default function App() {
   const shakeDice = () => {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
-
+    if (pyodideStatus === 'running') {
+      pyodideService.shake(0.7);
+      return;
+    }
     if (activeGame && activeGame.mock_rounds && activeGame.mock_rounds.length > 0) {
       const nextRoundIdx = (currentRound + 1) % activeGame.mock_rounds.length;
       setCurrentRound(nextRoundIdx);
@@ -909,38 +957,6 @@ export default function App() {
       } catch (err) {
         console.error("Failed to parse round data", err);
       }
-    } else {
-      // Default demo shake behavior if no active game is selected
-      const demoRounds = [
-        {
-          top: { type: 'text', content: 'DiceMaster' },
-          bottom: { type: 'text', content: 'Round 1' },
-          front: { type: 'text', content: 'Hello' },
-          back: { type: 'text', content: 'Hola' },
-          left: { type: 'text', content: 'Bonjour' },
-          right: { type: 'text', content: 'Ciao' },
-        },
-        {
-          top: { type: 'text', content: 'DiceMaster' },
-          bottom: { type: 'text', content: 'Round 2' },
-          front: { type: 'text', content: 'Apple' },
-          back: { type: 'text', content: 'Manzana' },
-          left: { type: 'text', content: 'Pomme' },
-          right: { type: 'text', content: 'Mela' },
-        },
-        {
-          top: { type: 'text', content: 'DiceMaster' },
-          bottom: { type: 'text', content: 'Round 3' },
-          front: { type: 'text', content: 'Water' },
-          back: { type: 'text', content: 'Agua' },
-          left: { type: 'text', content: 'Eau' },
-          right: { type: 'text', content: 'Acqua' },
-        }
-      ];
-      
-      const nextRoundIdx = (currentRound + 1) % demoRounds.length;
-      setCurrentRound(nextRoundIdx);
-      setScreens(resolveScreens(demoRounds[nextRoundIdx]));
     }
   };
 
