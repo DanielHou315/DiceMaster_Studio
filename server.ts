@@ -133,8 +133,10 @@ async function startServer() {
     const { path, content } = req.body;
     if (!path || content === undefined) return res.status(400).json({ error: "Missing path or content" });
     const info = db.prepare("UPDATE project_files SET content = ? WHERE path = ?").run(content, path);
-    if (info.changes === 0) return res.status(404).json({ error: "File not found" });
-    res.json({ message: "File updated successfully" });
+    if (info.changes === 0) {
+      db.prepare("INSERT INTO project_files (path, content) VALUES (?, ?)").run(path, content);
+    }
+    res.json({ message: "File saved successfully" });
   });
 
   app.post("/api/logs", (req, res) => {

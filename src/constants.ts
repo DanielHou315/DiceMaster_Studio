@@ -1,95 +1,126 @@
 export const CHINESE_QUIZLET_CODE = `"""
-Shake Quizlet — dice API example.
-Shaking the dice cycles through flashcards.
+Chinese Quizlet - Advanced multi-screen vocabulary card game.
 """
+import os
 import random
-import time
 
-from dice import screen, motion, log
+from dice import screen, motion, orientation, assets, log
 from dice.strategy import BaseStrategy
 
 
-class ShakeQuizletStrategy(BaseStrategy):
-    _strategy_name = "shake_quizlet"
+class ChineseQuizlet(BaseStrategy):
+    _strategy_name = "chinese_quizlet"
 
-    def __init__(self, game_name, config, assets_path, **kwargs):
+    def __init__(self, game_name: str, config: dict, assets_path: str, **kwargs):
         super().__init__(game_name, config, assets_path, **kwargs)
-        self.cards = [
-            {"q": "Apple", "a": "苹果", "hints": ["Red", "Sweet", "Fruit", "🍎"]},
-            {"q": "Cat", "a": "猫", "hints": ["Meow", "Feline", "Whiskers", "🐱"]},
-            {"q": "Computer", "a": "电脑", "hints": ["Screen", "Keyboard", "Electric", "💻"]},
-        ]
-        self.current = 0
-        self.last_shake = 0.0
+        self.top_screen_id = None
+        self.bottom_screen_id = None
+        self.side_screen_ids = []
+        self.current_round = 0
+        self.total_rounds = 3
+        self.displayed_initial = False
+        self.last_trigger_time = 0.0
+        self.cooldown_duration = 3.0
+
+    def _on_orientation_change(self, top, bottom):
+        self.top_screen_id = top
+        self.bottom_screen_id = bottom
+        self.side_screen_ids = [sid for sid in range(1, 7) if sid != top and sid != bottom]
+        if not self.displayed_initial:
+            self._display_round()
+            self.displayed_initial = True
+
+    def _display_round(self):
+        if self.top_screen_id is None:
+            return
+        r = self.current_round
+        root = self._assets_path
+        screen.set_text(self.top_screen_id, os.path.join(root, f"round_{r}_top.json"))
+        screen.set_text(self.bottom_screen_id, os.path.join(root, f"round_{r}_bottom.json"))
+        face_names = ["front", "back", "left", "right"]
+        for i, sid in enumerate(self.side_screen_ids[:4]):
+            screen.set_text(sid, os.path.join(root, f"round_{r}_{face_names[i]}.json"))
+
+    def _on_shake(self, intensity):
+        import time
+        now = time.time()
+        if now - self.last_trigger_time < self.cooldown_duration:
+            return
+        self.last_trigger_time = now
+        self.current_round = random.randint(0, self.total_rounds - 1)
+        self._display_round()
 
     def start_strategy(self):
         motion.on_shake(self._on_shake)
-        self._display()
-        log("ShakeQuizlet started")
+        orientation.on_change(self._on_orientation_change)
 
     def stop_strategy(self):
-        log("ShakeQuizlet stopped")
-
-    def _on_shake(self, intensity):
-        now = time.time()
-        if now - self.last_shake < 1.0:
-            return
-        self.last_shake = now
-        self.current = (self.current + 1) % len(self.cards)
-        self._display()
-
-    def _display(self):
-        card = self.cards[self.current]
-        screen.set_text(1, card["q"])
-        screen.set_text(6, card["a"])
-        for i, hint in enumerate(card["hints"][:4]):
-            screen.set_text(i + 2, hint)
-        log(f"Showing: {card['q']} = {card['a']}")
+        pass
 
 
-game = ShakeQuizletStrategy("quizlet", {}, "/assets")
+game = ChineseQuizlet("chinese_quizlet", {}, "/assets")
 game.start_strategy()
 `;
 
-export const HARDWARE_OPTIMIZER_CODE = `"""
-Pipeline Test — sends text to screens on a timer.
-Simplest dice API example, no assets needed.
-"""
-from dice import screen, log, timer
+export const DICE_API_REFERENCE = `# DiceMaster Central Web — dice Package
+
+Python SDK for the DiceMaster web simulator.
+Docs & source: https://github.com/DanielHou315/DiceMaster_Central_Web
+
+## Student API
+
+\`\`\`python
+from dice import screen, motion, orientation, timer, assets, log
 from dice.strategy import BaseStrategy
 
-
-class TestStrategy(BaseStrategy):
-    _strategy_name = "pipeline_test"
-
-    def __init__(self, game_name, config, assets_path, **kwargs):
-        super().__init__(game_name, config, assets_path, **kwargs)
-        self.available_screen_ids = list(range(1, 7))
-        self.current_screen_index = 0
-        self.message_count = 0
-        self._timer_id = None
+class MyGame(BaseStrategy):
+    _strategy_name = "my_game"
 
     def start_strategy(self):
-        self._timer_id = timer.set(1.0, self._send_notification)
-        log("TestStrategy started - sending notifications every 1s")
+        screen.set_image(1, assets.get("welcome.jpg"))
+        motion.on_shake(self.on_shake)
+        orientation.on_change(self.on_flip)
 
     def stop_strategy(self):
-        if self._timer_id is not None:
-            timer.cancel(self._timer_id)
-            self._timer_id = None
-        log("TestStrategy stopped")
+        pass
 
-    def _send_notification(self):
-        target_id = self.available_screen_ids[self.current_screen_index]
-        self.current_screen_index = (self.current_screen_index + 1) % len(self.available_screen_ids)
-        self.message_count += 1
-        content = f"Test #{self.message_count} screen {target_id}"
-        screen.set_text(target_id, content)
-        log(f"Sent: {content}")
+    def on_shake(self, intensity):
+        screen.set_text(1, assets.get("next.json"))
 
+    def on_flip(self, top, bottom):
+        log(f"Top screen: {top}")
+\`\`\`
 
-game = TestStrategy("test", {}, "/assets")
-game.start_strategy()
+## Modules
+
+| Module            | Functions                                              |
+|-------------------|--------------------------------------------------------|
+| dice.screen       | set_text(id, path), set_image(id, path), set_gif(id, path) |
+| dice.motion       | on_shake(fn), is_shaking(), shake_intensity()          |
+| dice.orientation  | on_change(fn), top(), bottom()                         |
+| dice.timer        | set(interval, fn), once(delay, fn), cancel(id)         |
+| dice.assets       | get(name), list_all()                                  |
+| dice.log          | log(message)                                           |
+| dice.strategy     | BaseStrategy (abstract: start_strategy(), stop_strategy()) |
+
+Screen IDs: 1=top, 2=front, 3=right, 4=back, 5=left, 6=bottom
+
+## JS Bridge Protocol
+
+### Outbound (Python → JS)
+| type             | fields                |
+|------------------|-----------------------|
+| screen.set_text  | screen_id, path       |
+| screen.set_image | screen_id, path       |
+| screen.set_gif   | screen_id, path       |
+| log              | message               |
+
+### Inbound (JS → Python)
+| type               | fields                         |
+|--------------------|--------------------------------|
+| motion.shake       | intensity (0.0-1.0)            |
+| motion.still       | (none)                         |
+| orientation.change | top, bottom (screen IDs)       |
 `;
 
 export const DEFAULT_BASE_CODE = `"""

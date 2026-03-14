@@ -100,7 +100,6 @@ export default function App() {
   const [isFlashing, setIsFlashing] = useState(false);
   const [isExpandingData, setIsExpandingData] = useState(false);
   const [activeGame, setActiveGame] = useState<LanguageGame | null>(null);
-  const [currentRound, setCurrentRound] = useState(0);
   const [isEnhancingGame, setIsEnhancingGame] = useState<number | null>(null);
   const [assets, setAssets] = useState<any[]>([]);
   const [isImprovingGame, setIsImprovingGame] = useState<number | null>(null);
@@ -568,9 +567,14 @@ export default function App() {
 
   const runCurrentCode = async () => {
     if (!selectedFile) return;
-    if (pyodideStatus !== 'ready' && pyodideStatus !== 'stopped') {
+    if (pyodideStatus === 'loading') {
       setError('Python runtime is still loading. Please wait...');
       return;
+    }
+    // Stop any currently running code — worker processes messages in order,
+    // so the subsequent run() call will execute after the stop completes.
+    if (pyodideStatus === 'running') {
+      pyodideService.stop();
     }
     setConsoleLogs([]);
     setError(null);
@@ -616,8 +620,61 @@ export default function App() {
     pyodideService.stop();
   };
 
+  const runBaseCodeInSimulator = () => {
+    const baseFile = { path: 'main.py', content: DEFAULT_BASE_CODE };
+    setSelectedFile(baseFile);
+    setFiles(prev => {
+      const exists = prev.some(f => f.path === 'main.py');
+      return exists ? prev.map(f => f.path === 'main.py' ? baseFile : f) : [...prev, baseFile];
+    });
+    setCurrentGameName(null);
+    setActiveGame(null);
+    if (pyodideStatus !== 'loading') {
+      if (pyodideStatus === 'running') pyodideService.stop();
+      setConsoleLogs([]);
+      setError(null);
+      setScreens({
+        top: { type: 'text', content: '' },
+        bottom: { type: 'text', content: '' },
+        front: { type: 'text', content: '' },
+        back: { type: 'text', content: '' },
+        left: { type: 'text', content: '' },
+        right: { type: 'text', content: '' },
+      });
+      pyodideService.run(DEFAULT_BASE_CODE);
+      setTimeout(() => pyodideService.setOrientation(1, 6), 300);
+    }
+  };
+
   const pyodideStatusRef = useRef(pyodideStatus);
   pyodideStatusRef.current = pyodideStatus;
+
+  const runCurrentCodeRef = useRef(runCurrentCode);
+  runCurrentCodeRef.current = runCurrentCode;
+
+  const autoRunDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!selectedFile?.content || !selectedFile.path.endsWith('.py')) return;
+    if (autoRunDebounceRef.current) clearTimeout(autoRunDebounceRef.current);
+    autoRunDebounceRef.current = setTimeout(() => {
+      if (pyodideStatusRef.current === 'loading') return;
+      runCurrentCodeRef.current();
+    }, 1500);
+    return () => {
+      if (autoRunDebounceRef.current) clearTimeout(autoRunDebounceRef.current);
+    };
+  }, [selectedFile?.content, selectedFile?.path]);
+
+  // When Python finishes loading, run the current .py file if nothing is running yet
+  const initialRunDoneRef = useRef(false);
+  useEffect(() => {
+    if (pyodideStatus === 'ready' && !initialRunDoneRef.current) {
+      initialRunDoneRef.current = true;
+      if (selectedFile?.path.endsWith('.py') && selectedFile?.content) {
+        runCurrentCodeRef.current();
+      }
+    }
+  }, [pyodideStatus]);
 
   const handleOrientationChange = useCallback((top: number, bottom: number) => {
     if (pyodideStatusRef.current === 'running') {
@@ -663,13 +720,8 @@ export default function App() {
           if (projectData.files && projectData.files.length > 0) {
             setFiles(projectData.files);
             setSelectedFile(projectData.files[0]);
-          } else {
-            // Preload DiceMaster base code if no project exists
-            loadGitHubCode();
           }
-        } else {
-          // Fallback to preloading if API fails
-          loadGitHubCode();
+          // else: initial state already has main.py with DEFAULT_BASE_CODE
         }
         
         if (logsRes.ok) {
@@ -1137,7 +1189,6 @@ export default function App() {
       }
       setScreens(resolveScreens(mockData));
       setActiveGame(game);
-      setCurrentRound(-1); // -1 means initial state
       // Make the game's code available for "Run" and point asset mounting at this game
       setCurrentGameName(game.name);
       if (game.code) {
@@ -1156,20 +1207,6 @@ export default function App() {
     setTimeout(() => setIsShaking(false), 500);
     if (pyodideStatus === 'running') {
       pyodideService.shake(0.7);
-      return;
-    }
-    if (activeGame && activeGame.mock_rounds && activeGame.mock_rounds.length > 0) {
-      const nextRoundIdx = (currentRound + 1) % activeGame.mock_rounds.length;
-      setCurrentRound(nextRoundIdx);
-      try {
-        const roundData = activeGame.mock_rounds[nextRoundIdx];
-        if (roundData) {
-          const parsedRound = typeof roundData === 'string' ? JSON.parse(roundData) : roundData;
-          setScreens(resolveScreens(parsedRound));
-        }
-      } catch (err) {
-        console.error("Failed to parse round data", err);
-      }
     }
   };
 
@@ -1971,7 +2008,6 @@ export default function App() {
           isUsbConnected={isUsbConnected}
           pyodideStatus={pyodideStatus}
           onFileSelect={setSelectedFile}
-          onRunCurrentCode={runCurrentCode}
           onFlashCode={flashCode}
           onSaveFile={saveFile}
           onNewFile={createNewFile}
@@ -2018,9 +2054,8 @@ export default function App() {
               isShaking={isShaking}
               isAnalyzing={isAnalyzing}
               pyodideStatus={pyodideStatus}
-              onRunCurrentCode={runCurrentCode}
               onLoadFile={() => fileInputRef.current?.click()}
-              onLoadBaseCode={loadGitHubCode}
+              onLoadBaseCode={runBaseCodeInSimulator}
               onShakeDice={shakeDice}
               onUpdateScreen={updateScreen}
               shakeSensitivity={shakeSensitivity}
@@ -2030,7 +2065,6 @@ export default function App() {
               onEditInstructions={editInstructions}
               onExpandGameData={expandGameData}
               isExpandingData={isExpandingData}
-              onStopCode={stopCurrentCode}
             />
           ) : (
             <Simulator3DContainer
@@ -2038,9 +2072,8 @@ export default function App() {
               isShaking={isShaking}
               isAnalyzing={isAnalyzing}
               pyodideStatus={pyodideStatus}
-              onRunCurrentCode={runCurrentCode}
               onLoadFile={() => fileInputRef.current?.click()}
-              onLoadBaseCode={loadGitHubCode}
+              onLoadBaseCode={runBaseCodeInSimulator}
               onShakeDice={shakeDice}
               onUpdateScreen={updateScreen}
               shakeSensitivity={shakeSensitivity}
@@ -2051,7 +2084,6 @@ export default function App() {
               onExpandGameData={expandGameData}
               isExpandingData={isExpandingData}
               onOrientationChange={handleOrientationChange}
-              onStopCode={stopCurrentCode}
             />
           )}
         </>
@@ -2081,15 +2113,6 @@ export default function App() {
           }}
           onInjectFeatured={() => injectFeaturedGame(languageGames)}
           onOpenExamples={() => setExamplesGalleryOpen(true)}
-        />
-      )}
-
-      {examplesGalleryOpen && (
-        <ExamplesGallery
-          onClose={() => setExamplesGalleryOpen(false)}
-          onLoad={loadExampleGame}
-          onRemix={remixExampleGame}
-          loadingFile={loadingExampleFile}
         />
       )}
 
@@ -2145,6 +2168,15 @@ export default function App() {
         />
       )}
       </AnimatePresence>
+
+      {examplesGalleryOpen && (
+        <ExamplesGallery
+          onClose={() => setExamplesGalleryOpen(false)}
+          onLoad={loadExampleGame}
+          onRemix={remixExampleGame}
+          loadingFile={loadingExampleFile}
+        />
+      )}
 
       {editingGame && (
         <GameContentEditor 

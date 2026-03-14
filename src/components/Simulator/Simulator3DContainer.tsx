@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Box, Play, Square, FileUp, Github, RotateCw, Loader2, Info, BookOpen, Database, Smartphone, Edit3, Sparkles, Wand2, List, AlertCircle } from 'lucide-react';
+import { Box, FileUp, Github, RotateCw, Loader2, Info, BookOpen, Database, Smartphone, Edit3, Sparkles, Wand2, List } from 'lucide-react';
 import type { SimStatus } from '../../services/pyodideService';
 import { CSSDice3D } from '../CSSDice3D';
 import { DiceScreens, LanguageGame, ProjectFile } from '../../types';
@@ -10,7 +10,6 @@ interface Simulator3DContainerProps {
   screens: DiceScreens;
   isShaking: boolean;
   isAnalyzing: boolean;
-  onRunCurrentCode: () => void;
   onLoadFile: () => void;
   onLoadBaseCode: () => void;
   onShakeDice: () => void;
@@ -24,14 +23,12 @@ interface Simulator3DContainerProps {
   isExpandingData?: boolean;
   pyodideStatus?: SimStatus;
   onOrientationChange?: (top: number, bottom: number) => void;
-  onStopCode?: () => void;
 }
 
 export const Simulator3DContainer: React.FC<Simulator3DContainerProps> = ({
   screens,
   isShaking,
   isAnalyzing,
-  onRunCurrentCode,
   onLoadFile,
   onLoadBaseCode,
   onShakeDice,
@@ -44,8 +41,7 @@ export const Simulator3DContainer: React.FC<Simulator3DContainerProps> = ({
   onExpandGameData,
   isExpandingData = false,
   pyodideStatus,
-  onOrientationChange,
-  onStopCode
+  onOrientationChange
 }) => {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'instructions' | 'data' | 'editor'>('instructions');
 
@@ -68,34 +64,23 @@ export const Simulator3DContainer: React.FC<Simulator3DContainerProps> = ({
           3D Immersive Simulator
         </h2>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          <button
-            onClick={onRunCurrentCode}
-            disabled={pyodideStatus === 'loading' || pyodideStatus === 'running'}
-            className={cn(
-              "flex-1 sm:flex-none px-6 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all",
-              pyodideStatus === 'loading'
-                ? "bg-amber-500/20 text-amber-400 cursor-not-allowed"
-                : pyodideStatus === 'running'
-                ? "bg-blue-500/20 text-blue-400 cursor-not-allowed"
-                : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-            )}
-          >
-            {pyodideStatus === 'loading' ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Loading Python...</>
-            ) : pyodideStatus === 'running' ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Running...</>
-            ) : (
-              <><Play className="w-4 h-4 fill-current" /> Run</>
-            )}
-          </button>
-          {pyodideStatus === 'running' && (
-            <button
-              onClick={onStopCode}
-              className="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-400 transition-all"
-            >
-              <Square className="w-4 h-4 fill-current" />
-              Stop
-            </button>
+          {/* Status Pill */}
+          {pyodideStatus === 'loading' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 text-sm font-bold">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading Python...
+            </div>
+          ) : pyodideStatus === 'running' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 text-sm font-bold">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Running
+            </div>
+          ) : pyodideStatus === 'error' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold">
+              <span className="w-2 h-2 rounded-full bg-red-400" /> Error
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-700/50 text-zinc-400 text-sm font-bold">
+              <span className="w-2 h-2 rounded-full bg-zinc-400" /> Ready
+            </div>
           )}
           <button
             onClick={onLoadFile}
