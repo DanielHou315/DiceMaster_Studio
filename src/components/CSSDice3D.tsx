@@ -71,37 +71,66 @@ function getTopFace(rx: number, ry: number): number {
  * and compute the angle.
  */
 function getTextRotation(rx: number, ry: number, faceNormal: 'x' | 'y' | 'z', faceSign: number): number {
-  const toRad = Math.PI / 180;
-  const cx = Math.cos(rx * toRad), sx = Math.sin(rx * toRad);
-  const cy = Math.cos(ry * toRad), sy = Math.sin(ry * toRad);
+  const d2r = Math.PI / 180;
 
-  // World up in dice-local space (same as getTopFace)
-  const up = { x: -sx * sy, y: -cx, z: sx * cy };
+  // CSS rotation matrices (right-handed, CSS convention).
+  const Rx = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[1, 0, 0], [0, c, -s], [0, s, c]];
+  };
+  const Ry = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[c, 0, s], [0, 1, 0], [-s, 0, c]];
+  };
+  const Rz = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+  };
+  // 3x3 matrix multiply.
+  const matmul = (A: number[][], B: number[][]): number[][] => {
+    const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (let i = 0; i < 3; i++)
+      for (let j = 0; j < 3; j++)
+        for (let k = 0; k < 3; k++)
+          C[i][j] += A[i][k] * B[k][j];
+    return C;
+  };
+  // Matrix * vector.
+  const mul = (A: number[][], v: number[]): number[] => [
+    A[0][0] * v[0] + A[0][1] * v[1] + A[0][2] * v[2],
+    A[1][0] * v[0] + A[1][1] * v[1] + A[1][2] * v[2],
+    A[2][0] * v[0] + A[2][1] * v[1] + A[2][2] * v[2],
+  ];
 
-  // For each face, project the up vector onto the face plane
-  // and compute the angle relative to the face's "natural up" direction.
-  let angle = 0;
+  // Base orientation of each face within the cube, derived from its normal.
+  //   front  z+ -> Ry(0)    back  z- -> Ry(180)
+  //   right  x+ -> Ry(90)   left  x- -> Ry(-90)
+  //   top    y- -> Rx(90)   bottom y+ -> Rx(-90)
+  let faceBase: number[][];
+  if (faceNormal === 'z') faceBase = faceSign > 0 ? Ry(0) : Ry(180);
+  else if (faceNormal === 'x') faceBase = faceSign > 0 ? Ry(90) : Ry(-90);
+  else faceBase = faceSign < 0 ? Rx(90) : Rx(-90);
 
-  if (faceNormal === 'z') {
-    // front (z+) or back (z-): face plane is XY. Natural up = -Y.
-    // For back face, X is mirrored.
-    const projX = faceSign > 0 ? up.x : -up.x;
-    const projY = up.y;
-    angle = Math.atan2(projX, -projY) * (180 / Math.PI);
-  } else if (faceNormal === 'x') {
-    // right (x+) or left (x-): face plane is ZY. Natural up = -Y.
-    const projZ = faceSign > 0 ? -up.z : up.z;
-    const projY = up.y;
-    angle = Math.atan2(projZ, -projY) * (180 / Math.PI);
-  } else {
-    // top (y-) or bottom (y+): face plane is XZ. Natural up = -Z.
-    const projX = faceSign < 0 ? up.x : -up.x;
-    const projZ = up.z;
-    angle = Math.atan2(projX, -projZ) * (180 / Math.PI);
+  // The full cube transform applied by CSS: rotateX(rx) rotateY(ry).
+  const cube = matmul(Rx(rx), Ry(ry));
+  const cubeFace = matmul(cube, faceBase);
+
+  // Screen-up is [0,-1,0] because the CSS Y axis points downward.
+  // For each candidate in-plane content rotation Rz(r), the content's "up"
+  // direction in world space is cube * faceBase * Rz(r) * [0,-1,0].
+  // Uprightness = -worldUp.y; pick the quarter-turn that maximizes it.
+  const screenUp = [0, -1, 0];
+  let best = 0;
+  let bestUpright = -Infinity;
+  for (const r of [0, 90, 180, 270]) {
+    const worldUp = mul(matmul(cubeFace, Rz(r)), screenUp);
+    const upright = -worldUp[1];
+    if (upright > bestUpright) {
+      bestUpright = upright;
+      best = r;
+    }
   }
-
-  // Snap to nearest 90 degrees for clean rotation
-  return Math.round(angle / 90) * 90;
+  return best;
 }
 
 /**
