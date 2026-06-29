@@ -167,12 +167,13 @@ export default function App() {
               }));
             } else {
               // Image or fallback
+              const imagePath = msg.path;
               let content = msg.path;
               const blobUrl = assetBlobURLsRef.current.get(content);
               if (blobUrl) content = blobUrl;
               setScreens(prev => ({
                 ...prev,
-                [face]: { type: 'image', content }
+                [face]: { type: 'image', content, imagePath }
               }));
             }
           }

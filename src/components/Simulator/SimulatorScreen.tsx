@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ScreenContent } from '../../types';
+import { HardwareImage } from './HardwareImage';
 
 const HW_RES = 480;
 const FONT_SIZES: Record<number, number> = {
@@ -41,14 +42,7 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
         style={{ backgroundColor: data.bgColor || '#000000' }}
       >
         {data.type === 'image' ? (
-          <img
-            src={data.content}
-            alt={face}
-            className="w-full h-full object-cover rounded-lg pointer-events-none"
-            referrerPolicy="no-referrer"
-            draggable={false}
-            onError={(e) => (e.currentTarget.src = 'https://picsum.photos/seed/error/480/480')}
-          />
+          <HardwareImage src={data.content} path={data.imagePath} className="w-full h-full" alt={face} />
         ) : data.textEntries && data.textEntries.length > 0 ? (
           /* Hardware-accurate: render at 480×480 then scale to container */
           <div

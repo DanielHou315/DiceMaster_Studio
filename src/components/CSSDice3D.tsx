@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DiceScreens, ScreenContent } from '../types';
 import { cn } from '../lib/utils';
+import { HardwareImage } from './Simulator/HardwareImage';
 
 interface CSSDice3DProps {
   screens: DiceScreens;
@@ -197,12 +198,11 @@ const Face = ({ content, transform, label, textRotation }: { content: ScreenCont
           </div>
         </div>
       ) : (
-        <img
+        <HardwareImage
           src={content.content}
+          path={content.imagePath}
+          className="w-full h-full"
           alt={label}
-          className="w-full h-full object-cover pointer-events-none"
-          referrerPolicy="no-referrer"
-          draggable={false}
           style={{ transform: `rotate(${textRotation}deg)` }}
         />
       )}

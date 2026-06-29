@@ -36,6 +36,8 @@ export interface ScreenContent {
   textEntries?: HWTextEntry[];
   /** Background CSS color (converted from RGB565) */
   bgColor?: string;
+  /** Original asset path (e.g. /assets/foo.jpg) used to validate hardware compatibility */
+  imagePath?: string;
 }
 
 export interface DiceScreens {
