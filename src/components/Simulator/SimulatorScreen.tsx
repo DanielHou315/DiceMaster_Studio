@@ -72,13 +72,10 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
                     position: 'absolute',
                     left: entry.x,
                     top: entry.y,
-                    width: HW_RES - entry.x,
                     fontSize: fontPx,
                     lineHeight: 1.2,
                     color: entry.fontColor,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre',
                     fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
                       : entry.fontId === 2 ? '"Noto Sans Arabic", sans-serif'
                       : entry.fontId === 4 ? '"Noto Sans", sans-serif'
