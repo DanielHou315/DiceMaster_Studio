@@ -1228,7 +1228,9 @@ export default function App() {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
     if (pyodideStatus === 'running') {
-      pyodideService.shake(0.7);
+      const intensity = Math.min(1, Math.max(0.1, shakeSensitivity / 100));
+      pyodideService.shake(intensity);
+      setTimeout(() => pyodideService.still(), 500);
     }
   };
 
