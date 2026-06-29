@@ -165,6 +165,27 @@ export default function App() {
                 ...prev,
                 [face]: { type: 'text', content: displayText, textEntries, bgColor }
               }));
+            } else if (msg.type === 'screen.set_gif') {
+              // Hardware GIF: msg.path is a .gif.d directory of numbered JPEG
+              // frames (0.jpg, 1.jpg, ...). Build an ordered blob-URL list.
+              const dir = msg.path.replace(/\/$/, '');
+              const prefix = dir + '/';
+              const frameEntries: { index: number; url: string }[] = [];
+              for (const [key, url] of assetBlobURLsRef.current.entries()) {
+                if (key.startsWith(prefix) && key.toLowerCase().endsWith('.jpg')) {
+                  const base = key.slice(prefix.length);
+                  const index = parseInt(base, 10);
+                  if (!Number.isNaN(index)) {
+                    frameEntries.push({ index, url });
+                  }
+                }
+              }
+              frameEntries.sort((a, b) => a.index - b.index);
+              const frames = frameEntries.map(f => f.url);
+              setScreens(prev => ({
+                ...prev,
+                [face]: { type: 'gif', content: msg.path, frames, imagePath: msg.path }
+              }));
             } else {
               // Image or fallback
               const imagePath = msg.path;

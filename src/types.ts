@@ -30,7 +30,7 @@ export interface HWTextEntry {
 }
 
 export interface ScreenContent {
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'gif';
   content: string;
   /** Structured text entries matching hardware TextGroup format */
   textEntries?: HWTextEntry[];
@@ -38,6 +38,8 @@ export interface ScreenContent {
   bgColor?: string;
   /** Original asset path (e.g. /assets/foo.jpg) used to validate hardware compatibility */
   imagePath?: string;
+  /** Ordered blob URLs of GIF frames (.gif.d directory of numbered JPEGs) */
+  frames?: string[];
 }
 
 export interface DiceScreens {

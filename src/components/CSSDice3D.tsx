@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DiceScreens, ScreenContent } from '../types';
 import { cn } from '../lib/utils';
 import { HardwareImage } from './Simulator/HardwareImage';
+import { HardwareGif } from './Simulator/HardwareGif';
 
 interface CSSDice3DProps {
   screens: DiceScreens;
@@ -197,6 +198,13 @@ const Face = ({ content, transform, label, textRotation }: { content: ScreenCont
             {content.content}
           </div>
         </div>
+      ) : content.type === 'gif' ? (
+        <HardwareGif
+          frames={content.frames ?? []}
+          className="w-full h-full"
+          alt={label}
+          style={{ transform: `rotate(${textRotation}deg)` }}
+        />
       ) : (
         <HardwareImage
           src={content.content}

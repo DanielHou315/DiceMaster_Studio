@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ScreenContent } from '../../types';
 import { HardwareImage } from './HardwareImage';
+import { HardwareGif } from './HardwareGif';
 
 const HW_RES = 480;
 const FONT_SIZES: Record<number, number> = {
@@ -41,7 +42,9 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
         className="w-full aspect-square rounded-2xl border-4 border-zinc-800 shadow-2xl overflow-hidden relative ring-1 ring-white/5 group-hover:border-emerald-500/50 transition-colors duration-500 select-none"
         style={{ backgroundColor: data.bgColor || '#000000' }}
       >
-        {data.type === 'image' ? (
+        {data.type === 'gif' ? (
+          <HardwareGif frames={data.frames ?? []} className="w-full h-full" alt={face} />
+        ) : data.type === 'image' ? (
           <HardwareImage src={data.content} path={data.imagePath} className="w-full h-full" alt={face} />
         ) : data.textEntries && data.textEntries.length > 0 ? (
           /* Hardware-accurate: render at 480×480 then scale to container */
