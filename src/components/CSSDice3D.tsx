@@ -38,10 +38,11 @@ function getTopFace(rx: number, ry: number): number {
   //
   // Inverse of rotateX(a) rotateY(b) = rotateY(-b) rotateX(-a).
   // rotateX(-rx) on (0, -1, 0): (0, -cos(rx), sin(rx)) = (0, -cx, sx)
-  // rotateY(-ry) on (x,y,z): (x*cy + z*sy, y, -x*sy + z*cy)
-  //   = (0*cy + sx*sy, -cx, 0*(-sy) + sx*cy) = (sx*sy, -cx, sx*cy)
+  // CSS rotateY(b) = [[cos,0,sin],[0,1,0],[-sin,0,cos]], so rotateY(-ry) on (x,y,z):
+  //   (x*cy - z*sy, y, x*sy + z*cy)
+  //   = (0*cy - sx*sy, -cx, 0*sy + sx*cy) = (-sx*sy, -cx, sx*cy)
 
-  const upInDice = { x: sx * sy, y: -cx, z: sx * cy };
+  const upInDice = { x: -sx * sy, y: -cx, z: sx * cy };
 
   // Face normals in dice-local space:
   // top: (0, -1, 0), bottom: (0, 1, 0)
@@ -74,7 +75,7 @@ function getTextRotation(rx: number, ry: number, faceNormal: 'x' | 'y' | 'z', fa
   const cy = Math.cos(ry * toRad), sy = Math.sin(ry * toRad);
 
   // World up in dice-local space (same as getTopFace)
-  const up = { x: sx * sy, y: -cx, z: sx * cy };
+  const up = { x: -sx * sy, y: -cx, z: sx * cy };
 
   // For each face, project the up vector onto the face plane
   // and compute the angle relative to the face's "natural up" direction.
