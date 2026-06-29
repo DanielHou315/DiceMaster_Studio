@@ -10,10 +10,11 @@ interface CSSDice3DProps {
 
 /**
  * Map face names to screen IDs.
- * 1=top, 2=front, 3=right, 4=back, 5=left, 6=bottom
+ * 1=top, 2=front, 3=left, 4=back, 5=right, 6=bottom
+ * (matches real dice_geometry.yaml chirality; right-handed)
  */
 const FACE_TO_ID: Record<string, number> = {
-  top: 1, front: 2, right: 3, back: 4, left: 5, bottom: 6
+  top: 1, front: 2, right: 5, back: 4, left: 3, bottom: 6
 };
 
 const OPPOSITE: Record<number, number> = {
@@ -53,8 +54,8 @@ function getTopFace(rx: number, ry: number): number {
     [6, upInDice.y],    // bottom: dot with (0,1,0)
     [2, upInDice.z],    // front: dot with (0,0,1)
     [4, -upInDice.z],   // back: dot with (0,0,-1)
-    [3, upInDice.x],    // right: dot with (1,0,0)
-    [5, -upInDice.x],   // left: dot with (-1,0,0)
+    [5, upInDice.x],    // right: dot with (1,0,0)
+    [3, -upInDice.x],   // left: dot with (-1,0,0)
   ];
 
   let best = faces[0];

@@ -47,9 +47,9 @@ function rgb565ToCss(value: string | number): string {
 const SCREEN_ID_TO_FACE: Record<number, string> = {
   1: 'top',
   2: 'front',
-  3: 'right',
+  3: 'left',
   4: 'back',
-  5: 'left',
+  5: 'right',
   6: 'bottom',
 };
 
