@@ -136,18 +136,20 @@ function getTextRotation(rx: number, ry: number, faceNormal: 'x' | 'y' | 'z', fa
 }
 
 /**
- * Hardware font sizes (U8g2 unifont ~16px on 480px screen).
- * Face is 192px (w-48 = 12rem), so scale = 192/480 = 0.4
+ * Hardware font sizes in 480-space. U8g2-native × 2 (firmware uses setTextSize(2)):
+ * unifont 16->32, cu12 12->24. Face is 192px (w-48 = 12rem), so scale = 192/480 = 0.4.
  */
 const HW_SCALE = 192 / 480;
 const FONT_SIZES: Record<number, number> = {
   0: 0,    // NOTEXT
-  1: 16,   // TF (unifont)
-  2: 16,   // ARABIC (unifont)
-  3: 16,   // CHINESE (unifont)
-  4: 12,   // CYRILLIC (cu12)
-  5: 16,   // DEVANAGARI (unifont)
+  1: 32,   // TF (unifont, 16×2)
+  2: 32,   // ARABIC (unifont, 16×2)
+  3: 32,   // CHINESE (unifont, 16×2)
+  4: 24,   // CYRILLIC (cu12, 12×2)
+  5: 32,   // DEVANAGARI (unifont, 16×2)
 };
+// Approximate alphabetic ascent fraction; baseline sits ASCENT_RATIO*fontSize below box top.
+const ASCENT_RATIO = 0.8;
 
 const Face = ({ content, transform, label, textRotation }: { content: ScreenContent, transform: string, label: string, textRotation: number }) => {
   const hasBgColor = content.bgColor && content.bgColor !== 'rgb(0,0,0)';
@@ -167,15 +169,16 @@ const Face = ({ content, transform, label, textRotation }: { content: ScreenCont
         /* Hardware-accurate positioned text rendering */
         <div className="absolute inset-0" style={{ transform: `rotate(${textRotation}deg)` }}>
           {content.textEntries.map((entry, i) => {
-            const fontSize = Math.max(8, Math.round((FONT_SIZES[entry.fontId] || 16) * HW_SCALE));
+            const fontSize = Math.max(8, Math.round((FONT_SIZES[entry.fontId] || 32) * HW_SCALE));
             return (
               <span
                 key={i}
-                className="absolute whitespace-pre leading-tight"
+                className="absolute whitespace-pre"
                 style={{
                   left: `${entry.x * HW_SCALE}px`,
-                  top: `${entry.y * HW_SCALE}px`,
+                  top: `${entry.y * HW_SCALE - ASCENT_RATIO * fontSize}px`,
                   fontSize: `${fontSize}px`,
+                  lineHeight: 1,
                   color: entry.fontColor,
                   fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
                     : entry.fontId === 2 ? '"Noto Sans Arabic", sans-serif'

@@ -4,14 +4,17 @@ import { HardwareImage } from './HardwareImage';
 import { HardwareGif } from './HardwareGif';
 
 const HW_RES = 480;
+// U8g2-native sizes × 2 (firmware uses setTextSize(2)): unifont 16->32, cu12 12->24.
 const FONT_SIZES: Record<number, number> = {
   0: 0,    // NOTEXT
-  1: 16,   // TF (unifont)
-  2: 16,   // ARABIC
-  3: 16,   // CHINESE
-  4: 12,   // CYRILLIC (cu12)
-  5: 16,   // DEVANAGARI
+  1: 32,   // TF (unifont, 16×2)
+  2: 32,   // ARABIC (unifont, 16×2)
+  3: 32,   // CHINESE (unifont, 16×2)
+  4: 24,   // CYRILLIC (cu12, 12×2)
+  5: 32,   // DEVANAGARI (unifont, 16×2)
 };
+// Approximate alphabetic ascent fraction; baseline sits ASCENT_RATIO*fontPx below box top.
+const ASCENT_RATIO = 0.8;
 
 interface SimulatorScreenProps {
   face: string;
@@ -60,7 +63,7 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
             }}
           >
             {data.textEntries.map((entry, i) => {
-              const fontPx = FONT_SIZES[entry.fontId] || 16;
+              const fontPx = FONT_SIZES[entry.fontId] || 32;
               if (fontPx === 0) return null;
               return (
                 <span
@@ -68,9 +71,9 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
                   style={{
                     position: 'absolute',
                     left: entry.x,
-                    top: entry.y,
+                    top: entry.y - ASCENT_RATIO * fontPx,
                     fontSize: fontPx,
-                    lineHeight: 1.2,
+                    lineHeight: 1,
                     color: entry.fontColor,
                     whiteSpace: 'pre',
                     fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
