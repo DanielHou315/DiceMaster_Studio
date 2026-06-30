@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Download, Copy, Loader2, Search } from 'lucide-react';
 
-interface ExampleMeta {
+export interface ExampleMeta {
   file: string;
+  /** "folder" means the game lives under /games/{file}/ as static files; omit for zip. */
+  type?: string;
   name: string;
   description: string;
   strategy_name?: string;
@@ -12,8 +14,8 @@ interface ExampleMeta {
 
 interface ExamplesGalleryProps {
   onClose: () => void;
-  onLoad: (file: string, name: string) => Promise<void>;
-  onRemix: (file: string, name: string) => Promise<void>;
+  onLoad: (meta: ExampleMeta) => Promise<void>;
+  onRemix: (meta: ExampleMeta) => Promise<void>;
   loadingFile: string | null;
 }
 
@@ -99,7 +101,7 @@ export const ExamplesGallery: React.FC<ExamplesGalleryProps> = ({
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => onLoad(ex.file, ex.name)}
+                          onClick={() => onLoad(ex)}
                           disabled={isLoading}
                           className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 text-xs font-bold py-1.5 rounded-lg transition-colors"
                           title="Load this game into your library"
@@ -108,7 +110,7 @@ export const ExamplesGallery: React.FC<ExamplesGalleryProps> = ({
                           Load
                         </button>
                         <button
-                          onClick={() => onRemix(ex.file, ex.name)}
+                          onClick={() => onRemix(ex)}
                           disabled={isLoading}
                           className="flex-1 flex items-center justify-center gap-1.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white text-xs font-bold py-1.5 rounded-lg transition-colors"
                           title="Create a remix to customize with your own assets"
