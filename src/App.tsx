@@ -17,7 +17,7 @@ import { AssetCard } from './components/Assets/AssetCard';
 import { serialService } from './services/serialService';
 import { pyodideService, WorkerMessage, SimStatus } from './services/pyodideService';
 import { loadGame, saveGame, unpackZip, createBlobURLs, revokeBlobURLs, UnpackedGame } from './services/assetStore';
-import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType } from './types';
+import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType, ScreenContent } from './types';
 import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, DICE_API_REFERENCE } from './constants';
 import { Simulator2D } from './components/Simulator/Simulator2D';
 import { Simulator3DContainer } from './components/Simulator/Simulator3DContainer';
@@ -1591,7 +1591,7 @@ export default function App() {
     setAssets(prev => prev.filter(a => a.id !== id));
   };
 
-  const updateScreen = (face: string, content: string, type: 'text' | 'image' = 'text') => {
+  const updateScreen = (face: string, content: string, type: ScreenContent['type'] = 'text') => {
     setScreens(prev => ({
       ...prev,
       [face]: { type, content }
