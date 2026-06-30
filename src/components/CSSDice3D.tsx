@@ -309,23 +309,23 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
         }}
       />
 
-      {/* Dice — rotates with drag */}
-      <div
-        className={cn(
-          "w-48 h-48 relative transition-transform duration-100 ease-out",
-          isShaking && "animate-shake"
-        )}
-        style={{
-          transformStyle: 'preserve-3d',
-          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-        }}
-      >
+      {/* Shake wrapper — translates only, never touches rotateX/Y */}
+      <div className={cn("w-48 h-48 relative", isShaking && "animate-shake")}>
+        {/* Dice — rotates with drag only */}
+        <div
+          className="w-48 h-48 relative"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+          }}
+        >
           <Face content={screens.front} transform="translateZ(96px)" label="Front" textRotation={textRotations.front} />
           <Face content={screens.back} transform="rotateY(180deg) translateZ(96px)" label="Back" textRotation={textRotations.back} />
           <Face content={screens.right} transform="rotateY(90deg) translateZ(96px)" label="Right" textRotation={textRotations.right} />
           <Face content={screens.left} transform="rotateY(-90deg) translateZ(96px)" label="Left" textRotation={textRotations.left} />
           <Face content={screens.top} transform="rotateX(90deg) translateZ(96px)" label="Top" textRotation={textRotations.top} />
           <Face content={screens.bottom} transform="rotateX(-90deg) translateZ(96px)" label="Bottom" textRotation={textRotations.bottom} />
+        </div>
       </div>
 
       <div className="absolute bottom-4 left-4 text-[10px] text-zinc-500 font-mono">
