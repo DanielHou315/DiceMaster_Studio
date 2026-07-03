@@ -33,50 +33,50 @@ export const GameCard: React.FC<GameCardProps> = ({
           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">AI Enhancing...</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 truncate pr-2">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-2">
           {game.assets_manifest ? (
-            <ImageIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+            <ImageIcon className="w-4 h-4 text-emerald-400 shrink-0 mt-1" />
           ) : (
-            <Type className="w-4 h-4 text-zinc-500 shrink-0" />
+            <Type className="w-4 h-4 text-zinc-500 shrink-0 mt-1" />
           )}
-          <h3 className="text-lg font-bold text-white truncate" title={game.name}>{game.name}</h3>
+          <h3 className="text-lg font-bold text-white break-words">{game.name}</h3>
           {game.name.includes('(Official)') && (
-            <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border border-emerald-500/20">
+            <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border border-emerald-500/20 shrink-0 mt-1.5">
               Official
             </span>
           )}
         </div>
-        <div className="flex gap-1">
-          <button 
+        <div className="flex gap-1 justify-end">
+          <button
             onClick={() => onEditContent(game)}
             className="text-zinc-600 hover:text-emerald-400 transition-colors p-1"
             title="Edit Content (Table/CSV)"
           >
             <TableIcon className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onEnhance(game)}
             className="text-zinc-600 hover:text-emerald-400 transition-colors p-1"
             title="AI Enhance (Add Rounds & Content)"
           >
             <Wand2 className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onFlash(game.code)}
             className="text-zinc-600 hover:text-amber-400 transition-colors p-1"
             title="Flash to Dice"
           >
             <Zap className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onDownload(game)}
             className="text-zinc-600 hover:text-emerald-400 transition-colors p-1"
             title="Download Game"
           >
             <Download className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onDelete(game.id)}
             className="text-zinc-600 hover:text-red-400 transition-colors p-1"
             title="Delete Game"

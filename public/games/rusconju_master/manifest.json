@@ -1,0 +1,6 @@
+{
+  "name": "RusConju Master",
+  "description": "A Russian verb conjugation trainer that uses all 6 sides of the DiceMaster to teach infinitive forms, subject pronouns, translations, and tenses.",
+  "strategy_name": "rusconju_master",
+  "version": "1.0.0"
+}

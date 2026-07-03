@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Vertical Transport",
+    "bottom": "'Lift' is also used in AU/NZ.",
+    "front": "USA",
+    "back": "UK",
+    "left": "Elevator",
+    "right": "Lift"
+  },
+  {
+    "round": 1,
+    "top": "Sweet Baked Good",
+    "bottom": "In the US, biscuits are savory bread.",
+    "front": "USA",
+    "back": "UK",
+    "left": "Cookie",
+    "right": "Biscuit"
+  },
+  {
+    "round": 2,
+    "top": "Car Engine Cover",
+    "bottom": "Related to clothing items!",
+    "front": "USA",
+    "back": "UK",
+    "left": "Hood",
+    "right": "Bonnet"
+  },
+  {
+    "round": 3,
+    "top": "Footwear",
+    "bottom": "Derived from 'training shoes'.",
+    "front": "USA",
+    "back": "UK",
+    "left": "Sneakers",
+    "right": "Trainers"
+  },
+  {
+    "round": 4,
+    "top": "Writing Tool",
+    "bottom": "Pluma literally means 'feather'.",
+    "front": "Spain",
+    "back": "Mexico",
+    "left": "Bolígrafo",
+    "right": "Pluma"
+  },
+  {
+    "round": 5,
+    "top": "Mobile Device",
+    "bottom": "Short for 'telefono celular'.",
+    "front": "Spain",
+    "back": "LatAm",
+    "left": "Móvil",
+    "right": "Celular"
+  },
+  {
+    "round": 6,
+    "top": "Public Transport",
+    "bottom": "Often called 'el bondi' in slang.",
+    "front": "Spain",
+    "back": "Argentina",
+    "left": "Autobús",
+    "right": "Colectivo"
+  },
+  {
+    "round": 7,
+    "top": "Fruit (Strawberry)",
+    "bottom": "Both are understood everywhere.",
+    "front": "Spain",
+    "back": "Argentina",
+    "left": "Fresa",
+    "right": "Frutilla"
+  },
+  {
+    "round": 8,
+    "top": "Apartment",
+    "bottom": "Flat comes from Old English 'flett'.",
+    "front": "USA",
+    "back": "UK",
+    "left": "Apartment",
+    "right": "Flat"
+  },
+  {
+    "round": 9,
+    "top": "Trash",
+    "bottom": "'Rubbish' is also used as an insult.",
+    "front": "USA",
+    "back": "UK",
+    "left": "Garbage",
+    "right": "Rubbish"
+  }
+]

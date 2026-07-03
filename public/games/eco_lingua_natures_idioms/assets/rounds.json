@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Gato (Cat)",
+    "bottom": "To rip someone off",
+    "front": "Dar gato por liebre",
+    "back": "To give a cat for a hare",
+    "left": "Spanish",
+    "right": "🐱➡️🐰"
+  },
+  {
+    "round": 1,
+    "top": "Tomaten (Tomatoes)",
+    "bottom": "To be oblivious",
+    "front": "Tomaten auf den Augen haben",
+    "back": "To have tomatoes on one's eyes",
+    "left": "German",
+    "right": "🍅👀"
+  },
+  {
+    "round": 2,
+    "top": "Chat (Cat)",
+    "bottom": "To speak plainly",
+    "front": "Appeler un chat un chat",
+    "back": "To call a cat a cat",
+    "left": "French",
+    "right": "🐈💬"
+  },
+  {
+    "round": 3,
+    "top": "Koban (Gold Coin)",
+    "bottom": "Pearls before swine",
+    "front": "Neko ni koban",
+    "back": "Gold coins to a cat",
+    "left": "Japanese",
+    "right": "🐈💰"
+  },
+  {
+    "round": 4,
+    "top": "Pato (Duck)",
+    "bottom": "To take the blame",
+    "front": "Pagar o pato",
+    "back": "To pay the duck",
+    "left": "Portuguese",
+    "right": "🦆💸"
+  },
+  {
+    "round": 5,
+    "top": "Lupo (Wolf)",
+    "bottom": "Good luck!",
+    "front": "In bocca al lupo",
+    "back": "In the mouth of the wolf",
+    "left": "Italian",
+    "right": "🐺👄"
+  },
+  {
+    "round": 6,
+    "top": "Ko (Cow)",
+    "bottom": "Don't worry",
+    "front": "Det finns ingen ko på isen",
+    "back": "There is no cow on the ice",
+    "left": "Swedish",
+    "right": "🐄🧊"
+  },
+  {
+    "round": 7,
+    "top": "Aap (Monkey)",
+    "bottom": "The truth is out",
+    "front": "Nu komt de aap uit de mouw",
+    "back": "The monkey comes out of the sleeve",
+    "left": "Dutch",
+    "right": "🐒👕"
+  },
+  {
+    "round": 8,
+    "top": "Mukha (Fly)",
+    "bottom": "To overreact",
+    "front": "Delat' iz mukhi slona",
+    "back": "To make an elephant out of a fly",
+    "left": "Russian",
+    "right": "🪰🐘"
+  },
+  {
+    "round": 9,
+    "top": "Hu (Tiger)",
+    "bottom": "Bullying via connections",
+    "front": "Hu jia hu wei",
+    "back": "Fox borrows tiger's awe",
+    "left": "Mandarin",
+    "right": "🦊🐯"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Pisar el palito",
+    "bottom": "To be fooled / To take the bait",
+    "front": "To step on the little stick",
+    "back": "I knew it was a trick, but I still stepped on the stick.",
+    "left": "Chile",
+    "right": "🪤"
+  },
+  {
+    "round": 1,
+    "top": "Komorebi",
+    "bottom": "Sunlight filtering through trees",
+    "front": "Scattered light through trees",
+    "back": "The forest was filled with beautiful komorebi.",
+    "left": "Japan",
+    "right": "🌳"
+  },
+  {
+    "round": 2,
+    "top": "Attendre 107 ans",
+    "bottom": "To wait a very long time",
+    "front": "To wait 107 years",
+    "back": "Hurry up! I won't wait 107 years for you.",
+    "left": "France",
+    "right": "⏳"
+  },
+  {
+    "round": 3,
+    "top": "Estar de mala leche",
+    "bottom": "To be in a bad mood",
+    "front": "To be of bad milk",
+    "back": "Don't talk to him today, he is of bad milk.",
+    "left": "Spain",
+    "right": "🥛"
+  },
+  {
+    "round": 4,
+    "top": "Kopfkino",
+    "bottom": "Playing a movie in your head",
+    "front": "Head cinema",
+    "back": "My kopfkino is running wild with anxiety.",
+    "left": "Germany",
+    "right": "🎬"
+  },
+  {
+    "round": 5,
+    "top": "Ponerse las pilas",
+    "bottom": "To wake up / Get moving",
+    "front": "To put in your batteries",
+    "back": "If you want to pass, you need to put in your batteries!",
+    "left": "Mexico",
+    "right": "🔋"
+  },
+  {
+    "round": 6,
+    "top": "Um belo dia",
+    "bottom": "Out of the blue",
+    "front": "A beautiful day",
+    "back": "A beautiful day, he just decided to quit his job.",
+    "left": "Brazil",
+    "right": "✨"
+  },
+  {
+    "round": 7,
+    "top": "Fika",
+    "bottom": "Coffee and cake break",
+    "front": "To have coffee",
+    "back": "Let's go for a fika at 3 PM.",
+    "left": "Sweden",
+    "right": "☕"
+  },
+  {
+    "round": 8,
+    "top": "C'est simple comme bonjour",
+    "bottom": "Very easy",
+    "front": "Simple as hello",
+    "back": "The exam was simple as hello.",
+    "left": "France",
+    "right": "👋"
+  },
+  {
+    "round": 9,
+    "top": "Tirar la toalla",
+    "bottom": "To give up",
+    "front": "To throw the towel",
+    "back": "Don't throw the towel yet, you're almost done!",
+    "left": "Spain",
+    "right": "🏳️"
+  }
+]
