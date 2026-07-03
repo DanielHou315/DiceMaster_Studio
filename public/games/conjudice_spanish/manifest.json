@@ -1,0 +1,6 @@
+{
+  "name": "ConjuDice Spanish",
+  "description": "A Spanish verb conjugation game for the DiceMaster. Shake to get a new verb and subject pronoun, then rotate the dice to reveal the conjugation, the meaning, and the grammatical person.",
+  "strategy_name": "conjudice_spanish",
+  "version": "1.0.0"
+}

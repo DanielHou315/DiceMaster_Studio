@@ -1,0 +1,6 @@
+{
+  "name": "Cognate Chaos",
+  "description": "A linguistic trap-detection game. Identify 'True Cognates' (words that look alike and mean the same) versus 'False Friends' (words that look alike but have different meanings).",
+  "strategy_name": "cognate_chaos",
+  "version": "1.0.0"
+}

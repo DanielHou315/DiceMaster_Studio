@@ -1,0 +1,6 @@
+{
+  "name": "Root Runner: The Etymology Engine",
+  "description": "A language learning game focused on Greek and Latin roots. Shake the dice to discover a root and its descendants across English, Spanish, French, and German.",
+  "strategy_name": "root_runner_the_etymology_engine",
+  "version": "1.0.0"
+}

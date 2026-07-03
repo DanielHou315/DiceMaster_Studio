@@ -14,24 +14,10 @@
     "version": "1.0.0"
   },
   {
-    "file": "cognate_chaos.zip",
-    "name": "Cognate Chaos",
-    "description": "A linguistic trap-detection game. Identify 'True Cognates' versus 'False Friends'.",
-    "strategy_name": "cognatechaos",
-    "version": "1.0.0"
-  },
-  {
     "file": "compound_conqueror.zip",
     "name": "Compound Conqueror",
     "description": "Deconstruct the world's most creative compound words.",
     "strategy_name": "compoundconqueror",
-    "version": "1.0.0"
-  },
-  {
-    "file": "conjudice_spanish.zip",
-    "name": "ConjuDice Spanish",
-    "description": "A Spanish verb conjugation game. Shake to get a new verb and subject pronoun.",
-    "strategy_name": "conjudicespanish",
     "version": "1.0.0"
   },
   {
@@ -161,24 +147,10 @@
     "version": "1.0.0"
   },
   {
-    "file": "portmanteau_lab_lexical_alchemist.zip",
-    "name": "Portmanteau Lab: The Lexical Alchemist",
-    "description": "Discover the hidden chemistry of language by deconstructing portmanteaus\u2014words formed by blending the sounds and meanings of two other words.",
-    "strategy_name": "portmanteaulablexicalalchemist",
-    "version": "1.0.0"
-  },
-  {
     "file": "proverb_pathfinder.zip",
     "name": "Proverb Pathfinder",
     "description": "A cross-cultural journey through ancient wisdom. Each shake reveals a unique proverb from around the world, its literal meaning, and its English equivalent.",
     "strategy_name": "proverb_pathfinder",
-    "version": "1.0.0"
-  },
-  {
-    "file": "root_runner_the_etymology_engine.zip",
-    "name": "Root Runner: The Etymology Engine",
-    "description": "A language learning game focused on Greek and Latin roots. Shake the dice to discover a root and its descendants across English, Spanish, French, and German.",
-    "strategy_name": "root_runner_the_etymology_engine",
     "version": "1.0.0"
   },
   {
@@ -189,13 +161,6 @@
     "version": "1.0.0"
   },
   {
-    "file": "semantic_shift_the_chrono_linguist.zip",
-    "name": "Semantic Shift: The Chrono-Linguist",
-    "description": "Discover how English words have completely changed their meanings over centuries. Shake to reveal a word's modern definition versus its surprising historical origin.",
-    "strategy_name": "semantic_shift_the_chrono_linguist",
-    "version": "1.0.0"
-  },
-  {
     "file": "slang_slinger_the_global_vernacular.zip",
     "name": "Slang Slinger: The Global Vernacular",
     "description": "Unlock the world's most colorful local expressions! Shake the dice to discover slang from different regions, languages, and subcultures. Learn what they mean, where they come from, and how to use them without sounding like a tourist.",
@@ -203,24 +168,10 @@
     "version": "1.0.0"
   },
   {
-    "file": "syntax_sorcerer_the_word_order_wizard.zip",
-    "name": "Syntax Sorcerer: The Word Order Wizard",
-    "description": "Master the logic of global sentence structures. Learn how different languages arrange Subjects, Verbs, and Objects (SVO, SOV, VSO) by shaking the dice to reveal a new linguistic puzzle.",
-    "strategy_name": "syntax_sorcerer_the_word_order_wizard",
-    "version": "1.0.0"
-  },
-  {
     "file": "the_polyglots_palette.zip",
     "name": "The Polyglot's Palette",
     "description": "Explore the vibrant world of color-based idioms from across the globe. Each shake reveals how different cultures use colors to describe emotions, situations, and people.",
     "strategy_name": "the_polyglots_palette",
-    "version": "1.0.0"
-  },
-  {
-    "file": "untranslatable_odyssey.zip",
-    "name": "Untranslatable Odyssey",
-    "description": "Discover words from around the world that have no direct English translation, turning your dice into a portal for deep cultural concepts.",
-    "strategy_name": "untranslatable_odyssey",
     "version": "1.0.0"
   }
 ]
