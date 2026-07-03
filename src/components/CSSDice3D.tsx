@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DiceScreens, ScreenContent } from '../types';
 import { cn } from '../lib/utils';
+import { HardwareImage } from './Simulator/HardwareImage';
+import { HardwareGif } from './Simulator/HardwareGif';
 
 interface CSSDice3DProps {
   screens: DiceScreens;
@@ -10,10 +12,11 @@ interface CSSDice3DProps {
 
 /**
  * Map face names to screen IDs.
- * 1=top, 2=front, 3=right, 4=back, 5=left, 6=bottom
+ * 1=top, 2=front, 3=left, 4=back, 5=right, 6=bottom
+ * (matches real dice_geometry.yaml chirality; right-handed)
  */
 const FACE_TO_ID: Record<string, number> = {
-  top: 1, front: 2, right: 3, back: 4, left: 5, bottom: 6
+  top: 1, front: 2, right: 5, back: 4, left: 3, bottom: 6
 };
 
 const OPPOSITE: Record<number, number> = {
@@ -38,10 +41,11 @@ function getTopFace(rx: number, ry: number): number {
   //
   // Inverse of rotateX(a) rotateY(b) = rotateY(-b) rotateX(-a).
   // rotateX(-rx) on (0, -1, 0): (0, -cos(rx), sin(rx)) = (0, -cx, sx)
-  // rotateY(-ry) on (x,y,z): (x*cy + z*sy, y, -x*sy + z*cy)
-  //   = (0*cy + sx*sy, -cx, 0*(-sy) + sx*cy) = (sx*sy, -cx, sx*cy)
+  // CSS rotateY(b) = [[cos,0,sin],[0,1,0],[-sin,0,cos]], so rotateY(-ry) on (x,y,z):
+  //   (x*cy - z*sy, y, x*sy + z*cy)
+  //   = (0*cy - sx*sy, -cx, 0*sy + sx*cy) = (-sx*sy, -cx, sx*cy)
 
-  const upInDice = { x: sx * sy, y: -cx, z: sx * cy };
+  const upInDice = { x: -sx * sy, y: -cx, z: sx * cy };
 
   // Face normals in dice-local space:
   // top: (0, -1, 0), bottom: (0, 1, 0)
@@ -52,8 +56,8 @@ function getTopFace(rx: number, ry: number): number {
     [6, upInDice.y],    // bottom: dot with (0,1,0)
     [2, upInDice.z],    // front: dot with (0,0,1)
     [4, -upInDice.z],   // back: dot with (0,0,-1)
-    [3, upInDice.x],    // right: dot with (1,0,0)
-    [5, -upInDice.x],   // left: dot with (-1,0,0)
+    [5, upInDice.x],    // right: dot with (1,0,0)
+    [3, -upInDice.x],   // left: dot with (-1,0,0)
   ];
 
   let best = faces[0];
@@ -69,52 +73,83 @@ function getTopFace(rx: number, ry: number): number {
  * and compute the angle.
  */
 function getTextRotation(rx: number, ry: number, faceNormal: 'x' | 'y' | 'z', faceSign: number): number {
-  const toRad = Math.PI / 180;
-  const cx = Math.cos(rx * toRad), sx = Math.sin(rx * toRad);
-  const cy = Math.cos(ry * toRad), sy = Math.sin(ry * toRad);
+  const d2r = Math.PI / 180;
 
-  // World up in dice-local space (same as getTopFace)
-  const up = { x: sx * sy, y: -cx, z: sx * cy };
+  // CSS rotation matrices (right-handed, CSS convention).
+  const Rx = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[1, 0, 0], [0, c, -s], [0, s, c]];
+  };
+  const Ry = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[c, 0, s], [0, 1, 0], [-s, 0, c]];
+  };
+  const Rz = (a: number): number[][] => {
+    const c = Math.cos(a * d2r), s = Math.sin(a * d2r);
+    return [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+  };
+  // 3x3 matrix multiply.
+  const matmul = (A: number[][], B: number[][]): number[][] => {
+    const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (let i = 0; i < 3; i++)
+      for (let j = 0; j < 3; j++)
+        for (let k = 0; k < 3; k++)
+          C[i][j] += A[i][k] * B[k][j];
+    return C;
+  };
+  // Matrix * vector.
+  const mul = (A: number[][], v: number[]): number[] => [
+    A[0][0] * v[0] + A[0][1] * v[1] + A[0][2] * v[2],
+    A[1][0] * v[0] + A[1][1] * v[1] + A[1][2] * v[2],
+    A[2][0] * v[0] + A[2][1] * v[1] + A[2][2] * v[2],
+  ];
 
-  // For each face, project the up vector onto the face plane
-  // and compute the angle relative to the face's "natural up" direction.
-  let angle = 0;
+  // Base orientation of each face within the cube, derived from its normal.
+  //   front  z+ -> Ry(0)    back  z- -> Ry(180)
+  //   right  x+ -> Ry(90)   left  x- -> Ry(-90)
+  //   top    y- -> Rx(90)   bottom y+ -> Rx(-90)
+  let faceBase: number[][];
+  if (faceNormal === 'z') faceBase = faceSign > 0 ? Ry(0) : Ry(180);
+  else if (faceNormal === 'x') faceBase = faceSign > 0 ? Ry(90) : Ry(-90);
+  else faceBase = faceSign < 0 ? Rx(90) : Rx(-90);
 
-  if (faceNormal === 'z') {
-    // front (z+) or back (z-): face plane is XY. Natural up = -Y.
-    // For back face, X is mirrored.
-    const projX = faceSign > 0 ? up.x : -up.x;
-    const projY = up.y;
-    angle = Math.atan2(projX, -projY) * (180 / Math.PI);
-  } else if (faceNormal === 'x') {
-    // right (x+) or left (x-): face plane is ZY. Natural up = -Y.
-    const projZ = faceSign > 0 ? -up.z : up.z;
-    const projY = up.y;
-    angle = Math.atan2(projZ, -projY) * (180 / Math.PI);
-  } else {
-    // top (y-) or bottom (y+): face plane is XZ. Natural up = -Z.
-    const projX = faceSign < 0 ? up.x : -up.x;
-    const projZ = up.z;
-    angle = Math.atan2(projX, -projZ) * (180 / Math.PI);
+  // The full cube transform applied by CSS: rotateX(rx) rotateY(ry).
+  const cube = matmul(Rx(rx), Ry(ry));
+  const cubeFace = matmul(cube, faceBase);
+
+  // Screen-up is [0,-1,0] because the CSS Y axis points downward.
+  // For each candidate in-plane content rotation Rz(r), the content's "up"
+  // direction in world space is cube * faceBase * Rz(r) * [0,-1,0].
+  // Uprightness = -worldUp.y; pick the quarter-turn that maximizes it.
+  const screenUp = [0, -1, 0];
+  let best = 0;
+  let bestUpright = -Infinity;
+  for (const r of [0, 90, 180, 270]) {
+    const worldUp = mul(matmul(cubeFace, Rz(r)), screenUp);
+    const upright = -worldUp[1];
+    if (upright > bestUpright) {
+      bestUpright = upright;
+      best = r;
+    }
   }
-
-  // Snap to nearest 90 degrees for clean rotation
-  return Math.round(angle / 90) * 90;
+  return best;
 }
 
 /**
- * Hardware font sizes (U8g2 unifont ~16px on 480px screen).
- * Face is 192px (w-48 = 12rem), so scale = 192/480 = 0.4
+ * Hardware font sizes in 480-space. U8g2-native × 2 (firmware uses setTextSize(2)):
+ * unifont 16->32, cu12 12->24. Face is 192px (w-48 = 12rem), so scale = 192/480 = 0.4.
  */
 const HW_SCALE = 192 / 480;
 const FONT_SIZES: Record<number, number> = {
   0: 0,    // NOTEXT
-  1: 16,   // TF (unifont)
-  2: 16,   // ARABIC (unifont)
-  3: 16,   // CHINESE (unifont)
-  4: 12,   // CYRILLIC (cu12)
-  5: 16,   // DEVANAGARI (unifont)
+  1: 32,   // TF (unifont, 16×2)
+  2: 32,   // ARABIC (unifont, 16×2)
+  3: 32,   // CHINESE (unifont, 16×2)
+  4: 24,   // CYRILLIC (cu12, 12×2)
+  5: 32,   // DEVANAGARI (unifont, 16×2)
 };
+// Approximate alphabetic ascent fraction; baseline sits ASCENT_RATIO*fontSize below box top.
+const ASCENT_RATIO = 0.8;
 
 const Face = ({ content, transform, label, textRotation }: { content: ScreenContent, transform: string, label: string, textRotation: number }) => {
   const hasBgColor = content.bgColor && content.bgColor !== 'rgb(0,0,0)';
@@ -134,15 +169,16 @@ const Face = ({ content, transform, label, textRotation }: { content: ScreenCont
         /* Hardware-accurate positioned text rendering */
         <div className="absolute inset-0" style={{ transform: `rotate(${textRotation}deg)` }}>
           {content.textEntries.map((entry, i) => {
-            const fontSize = Math.max(8, Math.round((FONT_SIZES[entry.fontId] || 16) * HW_SCALE));
+            const fontSize = Math.max(8, Math.round((FONT_SIZES[entry.fontId] || 32) * HW_SCALE));
             return (
               <span
                 key={i}
-                className="absolute whitespace-pre leading-tight"
+                className="absolute whitespace-pre"
                 style={{
                   left: `${entry.x * HW_SCALE}px`,
-                  top: `${entry.y * HW_SCALE}px`,
+                  top: `${entry.y * HW_SCALE - ASCENT_RATIO * fontSize}px`,
                   fontSize: `${fontSize}px`,
+                  lineHeight: 1,
                   color: entry.fontColor,
                   fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
                     : entry.fontId === 2 ? '"Noto Sans Arabic", sans-serif'
@@ -165,13 +201,19 @@ const Face = ({ content, transform, label, textRotation }: { content: ScreenCont
             {content.content}
           </div>
         </div>
-      ) : (
-        <img
-          src={content.content}
+      ) : content.type === 'gif' ? (
+        <HardwareGif
+          frames={content.frames ?? []}
+          className="w-full h-full"
           alt={label}
-          className="w-full h-full object-cover pointer-events-none"
-          referrerPolicy="no-referrer"
-          draggable={false}
+          style={{ transform: `rotate(${textRotation}deg)` }}
+        />
+      ) : (
+        <HardwareImage
+          src={content.content}
+          path={content.imagePath}
+          className="w-full h-full"
+          alt={label}
           style={{ transform: `rotate(${textRotation}deg)` }}
         />
       )}
@@ -267,23 +309,23 @@ export const CSSDice3D: React.FC<CSSDice3DProps> = ({ screens, isShaking, onOrie
         }}
       />
 
-      {/* Dice — rotates with drag */}
-      <div
-        className={cn(
-          "w-48 h-48 relative transition-transform duration-100 ease-out",
-          isShaking && "animate-shake"
-        )}
-        style={{
-          transformStyle: 'preserve-3d',
-          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-        }}
-      >
+      {/* Shake wrapper — translates only, never touches rotateX/Y */}
+      <div className={cn("w-48 h-48 relative", isShaking && "animate-shake")}>
+        {/* Dice — rotates with drag only */}
+        <div
+          className="w-48 h-48 relative"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+          }}
+        >
           <Face content={screens.front} transform="translateZ(96px)" label="Front" textRotation={textRotations.front} />
           <Face content={screens.back} transform="rotateY(180deg) translateZ(96px)" label="Back" textRotation={textRotations.back} />
           <Face content={screens.right} transform="rotateY(90deg) translateZ(96px)" label="Right" textRotation={textRotations.right} />
           <Face content={screens.left} transform="rotateY(-90deg) translateZ(96px)" label="Left" textRotation={textRotations.left} />
           <Face content={screens.top} transform="rotateX(90deg) translateZ(96px)" label="Top" textRotation={textRotations.top} />
           <Face content={screens.bottom} transform="rotateX(-90deg) translateZ(96px)" label="Bottom" textRotation={textRotations.bottom} />
+        </div>
       </div>
 
       <div className="absolute bottom-4 left-4 text-[10px] text-zinc-500 font-mono">

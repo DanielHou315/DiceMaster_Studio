@@ -135,8 +135,48 @@ export function createBlobURLs(
 /** Revoke all blob URLs to free memory. */
 export function revokeBlobURLs(urls: Map<string, string>): void {
   for (const url of urls.values()) {
-    URL.revokeObjectURL(url);
+    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
   }
+}
+
+const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+
+/**
+ * Load a folder-based game served from /games/{slug}/.
+ * Returns:
+ *  - fsFiles: text/JSON files as Uint8Arrays for mounting into Pyodide FS
+ *  - imageUrls: map of /{assetPath} → HTTP URL for direct image rendering
+ */
+export async function fetchFolderGame(
+  slug: string,
+  files: string[]
+): Promise<{ fsFiles: Map<string, Uint8Array>; imageUrls: Map<string, string> }> {
+  const fsFiles = new Map<string, Uint8Array>();
+  const imageUrls = new Map<string, string>();
+
+  await Promise.all(
+    files.map(async (path) => {
+      const lower = path.toLowerCase();
+      const isImage = IMAGE_EXTS.some((ext) => lower.endsWith(ext));
+      const httpUrl = `/games/${slug}/${path}`;
+
+      if (isImage) {
+        // Store HTTP URL directly — no fetch needed, Vite serves it
+        imageUrls.set(`/${path}`, httpUrl);
+      } else {
+        // Fetch text/JSON to mount into emscripten FS for Python open()
+        try {
+          const res = await fetch(httpUrl);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            fsFiles.set(path, new Uint8Array(buf));
+          }
+        } catch { /* ignore missing files */ }
+      }
+    })
+  );
+
+  return { fsFiles, imageUrls };
 }
 
 /** Create a zip blob from a game's components. */

@@ -1,15 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ScreenContent } from '../../types';
+import { HardwareImage } from './HardwareImage';
+import { HardwareGif } from './HardwareGif';
 
 const HW_RES = 480;
+// U8g2-native sizes × 2 (firmware uses setTextSize(2)): unifont 16->32, cu12 12->24.
 const FONT_SIZES: Record<number, number> = {
   0: 0,    // NOTEXT
-  1: 16,   // TF (unifont)
-  2: 16,   // ARABIC
-  3: 16,   // CHINESE
-  4: 12,   // CYRILLIC (cu12)
-  5: 16,   // DEVANAGARI
+  1: 32,   // TF (unifont, 16×2)
+  2: 32,   // ARABIC (unifont, 16×2)
+  3: 32,   // CHINESE (unifont, 16×2)
+  4: 24,   // CYRILLIC (cu12, 12×2)
+  5: 32,   // DEVANAGARI (unifont, 16×2)
 };
+// Approximate alphabetic ascent fraction; baseline sits ASCENT_RATIO*fontPx below box top.
+const ASCENT_RATIO = 0.8;
 
 interface SimulatorScreenProps {
   face: string;
@@ -40,15 +45,10 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
         className="w-full aspect-square rounded-2xl border-4 border-zinc-800 shadow-2xl overflow-hidden relative ring-1 ring-white/5 group-hover:border-emerald-500/50 transition-colors duration-500 select-none"
         style={{ backgroundColor: data.bgColor || '#000000' }}
       >
-        {data.type === 'image' ? (
-          <img
-            src={data.content}
-            alt={face}
-            className="w-full h-full object-cover rounded-lg pointer-events-none"
-            referrerPolicy="no-referrer"
-            draggable={false}
-            onError={(e) => (e.currentTarget.src = 'https://picsum.photos/seed/error/480/480')}
-          />
+        {data.type === 'gif' ? (
+          <HardwareGif frames={data.frames ?? []} className="w-full h-full" alt={face} />
+        ) : data.type === 'image' ? (
+          <HardwareImage src={data.content} path={data.imagePath} className="w-full h-full" alt={face} />
         ) : data.textEntries && data.textEntries.length > 0 ? (
           /* Hardware-accurate: render at 480×480 then scale to container */
           <div
@@ -63,7 +63,7 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
             }}
           >
             {data.textEntries.map((entry, i) => {
-              const fontPx = FONT_SIZES[entry.fontId] || 16;
+              const fontPx = FONT_SIZES[entry.fontId] || 32;
               if (fontPx === 0) return null;
               return (
                 <span
@@ -71,14 +71,11 @@ export const SimulatorScreen: React.FC<SimulatorScreenProps> = ({ face, data }) 
                   style={{
                     position: 'absolute',
                     left: entry.x,
-                    top: entry.y,
-                    width: HW_RES - entry.x,
+                    top: entry.y - ASCENT_RATIO * fontPx,
                     fontSize: fontPx,
-                    lineHeight: 1.2,
+                    lineHeight: 1,
                     color: entry.fontColor,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
+                    whiteSpace: 'pre',
                     fontFamily: entry.fontId === 3 ? '"Noto Sans SC", "Microsoft YaHei", sans-serif'
                       : entry.fontId === 2 ? '"Noto Sans Arabic", sans-serif'
                       : entry.fontId === 4 ? '"Noto Sans", sans-serif'

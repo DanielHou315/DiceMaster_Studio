@@ -16,8 +16,9 @@ import { GameCard } from './components/Games/GameCard';
 import { AssetCard } from './components/Assets/AssetCard';
 import { serialService } from './services/serialService';
 import { pyodideService, WorkerMessage, SimStatus } from './services/pyodideService';
-import { loadGame, saveGame, unpackZip, createBlobURLs, revokeBlobURLs, UnpackedGame } from './services/assetStore';
-import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType } from './types';
+import { loadGame, saveGame, unpackZip, createBlobURLs, revokeBlobURLs, fetchFolderGame, UnpackedGame } from './services/assetStore';
+import { ProjectFile, AnalysisLog, LanguageGame, DiceScreens, TabType, ScreenContent } from './types';
+import type { ExampleMeta } from './components/Games/ExamplesGallery';
 import { CHINESE_QUIZLET_CODE, DEFAULT_BASE_CODE, DICE_API_REFERENCE } from './constants';
 import { Simulator2D } from './components/Simulator/Simulator2D';
 import { Simulator3DContainer } from './components/Simulator/Simulator3DContainer';
@@ -47,9 +48,9 @@ function rgb565ToCss(value: string | number): string {
 const SCREEN_ID_TO_FACE: Record<number, string> = {
   1: 'top',
   2: 'front',
-  3: 'right',
+  3: 'left',
   4: 'back',
-  5: 'left',
+  5: 'right',
   6: 'bottom',
 };
 
@@ -165,14 +166,36 @@ export default function App() {
                 ...prev,
                 [face]: { type: 'text', content: displayText, textEntries, bgColor }
               }));
+            } else if (msg.type === 'screen.set_gif') {
+              // Hardware GIF: msg.path is a .gif.d directory of numbered JPEG
+              // frames (0.jpg, 1.jpg, ...). Build an ordered blob-URL list.
+              const dir = msg.path.replace(/\/$/, '');
+              const prefix = dir + '/';
+              const frameEntries: { index: number; url: string }[] = [];
+              for (const [key, url] of assetBlobURLsRef.current.entries()) {
+                if (key.startsWith(prefix) && key.toLowerCase().endsWith('.jpg')) {
+                  const base = key.slice(prefix.length);
+                  const index = parseInt(base, 10);
+                  if (!Number.isNaN(index)) {
+                    frameEntries.push({ index, url });
+                  }
+                }
+              }
+              frameEntries.sort((a, b) => a.index - b.index);
+              const frames = frameEntries.map(f => f.url);
+              setScreens(prev => ({
+                ...prev,
+                [face]: { type: 'gif', content: msg.path, frames, imagePath: msg.path }
+              }));
             } else {
               // Image or fallback
+              const imagePath = msg.path;
               let content = msg.path;
               const blobUrl = assetBlobURLsRef.current.get(content);
               if (blobUrl) content = blobUrl;
               setScreens(prev => ({
                 ...prev,
-                [face]: { type: 'image', content }
+                [face]: { type: 'image', content, imagePath }
               }));
             }
           }
@@ -410,7 +433,30 @@ export default function App() {
   const [examplesGalleryOpen, setExamplesGalleryOpen] = useState(false);
   const [loadingExampleFile, setLoadingExampleFile] = useState<string | null>(null);
 
-  const loadExampleGame = async (file: string, name: string) => {
+  /** Load a folder-based game (served as static HTTP from /games/{slug}/) */
+  const loadFolderExampleGame = async (meta: ExampleMeta, nameOverride?: string): Promise<Omit<LanguageGame, 'id' | 'created_at'> | null> => {
+    try {
+      const [manifestRes, strategyRes] = await Promise.all([
+        fetch(`/games/${meta.file}/manifest.json`),
+        fetch(`/games/${meta.file}/strategy.py`),
+      ]);
+      if (!manifestRes.ok || !strategyRes.ok) return null;
+      const manifest = await manifestRes.json();
+      const code = await strategyRes.text();
+      return {
+        name: nameOverride ?? manifest.name,
+        description: manifest.description ?? '',
+        code,
+        mock_data: JSON.stringify({}),
+        mock_rounds: [],
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const loadExampleGame = async (meta: ExampleMeta) => {
+    const { file, name } = meta;
     if (languageGames.some(g => g.name === name)) {
       // Already loaded — just open the games tab
       setActiveTab('games');
@@ -419,17 +465,25 @@ export default function App() {
     }
     setLoadingExampleFile(file);
     try {
-      const res = await fetch(`/examples/${file}`);
-      const blob = await res.blob();
-      const gameData = await parseExampleZip(blob);
+      let gameData: Omit<LanguageGame, 'id' | 'created_at'> | null = null;
+
+      if (meta.type === 'folder') {
+        gameData = await loadFolderExampleGame(meta);
+      } else {
+        const res = await fetch(`/examples/${file}`);
+        const blob = await res.blob();
+        gameData = await parseExampleZip(blob);
+        // Save ZIP to IndexedDB for asset mounting (zip-based games only)
+        await saveGame(gameData.name, blob);
+      }
+
+      if (!gameData) return;
       const postRes = await fetch('/api/language-games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...gameData, id: Date.now(), created_at: new Date().toISOString() }),
       });
       if (postRes.ok) {
-        // Also save ZIP to IndexedDB so assets can be mounted when running the strategy
-        await saveGame(gameData.name, blob);
         await fetchAndSetGames();
         setExamplesGalleryOpen(false);
         setActiveTab('games');
@@ -441,21 +495,29 @@ export default function App() {
     }
   };
 
-  const remixExampleGame = async (file: string, name: string) => {
+  const remixExampleGame = async (meta: ExampleMeta) => {
+    const { file, name } = meta;
     setLoadingExampleFile(file);
     try {
-      const res = await fetch(`/examples/${file}`);
-      const blob = await res.blob();
       const remixName = `${name} (Remix)`;
-      const gameData = await parseExampleZip(blob, remixName);
+      let gameData: Omit<LanguageGame, 'id' | 'created_at'> | null = null;
+
+      if (meta.type === 'folder') {
+        gameData = await loadFolderExampleGame(meta, remixName);
+      } else {
+        const res = await fetch(`/examples/${file}`);
+        const blob = await res.blob();
+        gameData = await parseExampleZip(blob, remixName);
+        await saveGame(remixName, blob);
+      }
+
+      if (!gameData) return;
       const postRes = await fetch('/api/language-games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...gameData, id: Date.now(), created_at: new Date().toISOString() }),
       });
       if (postRes.ok) {
-        // Save ZIP to IndexedDB under the remix name for asset mounting
-        await saveGame(remixName, blob);
         const games = await fetchAndSetGames();
         const remixed = games.find((g: LanguageGame) => g.name === remixName);
         if (remixed) setEditingGame(remixed);
@@ -597,14 +659,23 @@ export default function App() {
     // If a game is loaded, mount its assets into Pyodide FS
     if (currentGameName) {
       try {
-        const zipBlob = await loadGame(currentGameName);
-        if (zipBlob) {
-          const unpacked = await unpackZip(zipBlob);
-          // Mount asset files into worker's emscripten FS
-          // Paths from unpackZip already include "assets/" prefix
-          pyodideService.mountAssets(unpacked.files);
-          // Create blob URLs for image resolution
-          assetBlobURLsRef.current = createBlobURLs(unpacked.files);
+        const slug = currentGameName.toLowerCase().replace(/\s+/g, '_');
+        // Try folder-based game first (served as static HTTP from /games/{slug}/)
+        const folderRes = await fetch(`/games/${slug}/manifest.json`).catch(() => null);
+        if (folderRes?.ok) {
+          const folderManifest = await folderRes.json();
+          const fileList: string[] = folderManifest.files ?? [];
+          const { fsFiles, imageUrls } = await fetchFolderGame(slug, fileList);
+          pyodideService.mountAssets(fsFiles);
+          assetBlobURLsRef.current = imageUrls;
+        } else {
+          // Fall back to zip stored in IndexedDB
+          const zipBlob = await loadGame(currentGameName);
+          if (zipBlob) {
+            const unpacked = await unpackZip(zipBlob);
+            pyodideService.mountAssets(unpacked.files);
+            assetBlobURLsRef.current = createBlobURLs(unpacked.files);
+          }
         }
       } catch (err) {
         console.error('Failed to mount game assets:', err);
@@ -1206,7 +1277,9 @@ export default function App() {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
     if (pyodideStatus === 'running') {
-      pyodideService.shake(0.7);
+      const intensity = Math.min(1, Math.max(0.1, shakeSensitivity / 100));
+      pyodideService.shake(intensity);
+      setTimeout(() => pyodideService.still(), 500);
     }
   };
 
@@ -1567,7 +1640,7 @@ export default function App() {
     setAssets(prev => prev.filter(a => a.id !== id));
   };
 
-  const updateScreen = (face: string, content: string, type: 'text' | 'image' = 'text') => {
+  const updateScreen = (face: string, content: string, type: ScreenContent['type'] = 'text') => {
     setScreens(prev => ({
       ...prev,
       [face]: { type, content }

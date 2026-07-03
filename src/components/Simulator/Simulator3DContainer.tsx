@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Box, FileUp, Github, RotateCw, Loader2, Info, BookOpen, Database, Smartphone, Edit3, Sparkles, Wand2, List } from 'lucide-react';
 import type { SimStatus } from '../../services/pyodideService';
 import { CSSDice3D } from '../CSSDice3D';
-import { DiceScreens, LanguageGame, ProjectFile } from '../../types';
+import { DiceScreens, LanguageGame, ProjectFile, ScreenContent } from '../../types';
 import { cn } from '../../lib/utils';
 
 interface Simulator3DContainerProps {
@@ -13,7 +13,7 @@ interface Simulator3DContainerProps {
   onLoadFile: () => void;
   onLoadBaseCode: () => void;
   onShakeDice: () => void;
-  onUpdateScreen: (face: keyof DiceScreens, content: string, type: 'text' | 'image') => void;
+  onUpdateScreen: (face: keyof DiceScreens, content: string, type: ScreenContent['type']) => void;
   shakeSensitivity?: number;
   activeGame?: LanguageGame | null;
   files: ProjectFile[];

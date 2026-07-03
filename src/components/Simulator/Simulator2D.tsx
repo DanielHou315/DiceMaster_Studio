@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Layout, FileUp, Github, RotateCw, Smartphone, Loader2, Info, BookOpen, Sparkles, Edit3, Database, Wand2, List } from 'lucide-react';
 import type { SimStatus } from '../../services/pyodideService';
 import { SimulatorScreen } from './SimulatorScreen';
-import { DiceScreens, LanguageGame, ProjectFile } from '../../types';
+import { DiceScreens, LanguageGame, ProjectFile, ScreenContent } from '../../types';
 import { cn } from '../../lib/utils';
 
 interface Simulator2DProps {
@@ -14,7 +14,7 @@ interface Simulator2DProps {
   onLoadFile: () => void;
   onLoadBaseCode: () => void;
   onShakeDice: () => void;
-  onUpdateScreen: (face: keyof DiceScreens, content: string, type: 'text' | 'image') => void;
+  onUpdateScreen: (face: keyof DiceScreens, content: string, type: ScreenContent['type']) => void;
   shakeSensitivity?: number;
   activeGame?: LanguageGame | null;
   files: ProjectFile[];

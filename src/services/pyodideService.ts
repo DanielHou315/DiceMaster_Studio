@@ -73,6 +73,10 @@ class PyodideService {
     this.worker?.postMessage({ type: "motion.shake", intensity });
   }
 
+  still(): void {
+    this.worker?.postMessage({ type: "motion.still" });
+  }
+
   mountAssets(files: Map<string, Uint8Array>): void {
     // Convert to transferable ArrayBuffers
     const entries: [string, ArrayBuffer][] = [];

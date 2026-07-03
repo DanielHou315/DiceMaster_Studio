@@ -191,7 +191,7 @@ onmessage = async (e) => {
       fs.writeFile("/" + path, new Uint8Array(buffer));
     }
     // Assets mounted successfully — no status change needed
-  } else if (msg.type === "motion.shake" || msg.type === "orientation.change") {
+  } else if (msg.type === "motion.shake" || msg.type === "motion.still" || msg.type === "orientation.change") {
     sendEvent(msg);
   }
 };
