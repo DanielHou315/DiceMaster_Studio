@@ -40,7 +40,7 @@ export const GameCard: React.FC<GameCardProps> = ({
           ) : (
             <Type className="w-4 h-4 text-zinc-500 shrink-0" />
           )}
-          <h3 className="text-lg font-bold text-white truncate">{game.name}</h3>
+          <h3 className="text-lg font-bold text-white truncate" title={game.name}>{game.name}</h3>
           {game.name.includes('(Official)') && (
             <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border border-emerald-500/20">
               Official

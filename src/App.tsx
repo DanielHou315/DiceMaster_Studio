@@ -111,6 +111,7 @@ export default function App() {
   const [engineType, setEngineType] = useState<'webgl' | 'css' | 'canvas'>('css');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assetBlobURLsRef = useRef<Map<string, string>>(new Map());
+  const featuredInjectAttemptedRef = useRef(false);
   const [currentGameName, setCurrentGameName] = useState<string | null>(null);
 
   // Settings State
@@ -805,7 +806,8 @@ export default function App() {
 
         if (gamesRes.ok) {
           const games = await fetchAndSetGames();
-          if (games.length === 0) {
+          if (games.length === 0 && !featuredInjectAttemptedRef.current) {
+            featuredInjectAttemptedRef.current = true;
             injectFeaturedGame(games);
           }
         }
