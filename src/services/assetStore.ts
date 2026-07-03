@@ -144,7 +144,9 @@ const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
 /**
  * Load a folder-based game served from /games/{slug}/.
  * Returns:
- *  - fsFiles: text/JSON files as Uint8Arrays for mounting into Pyodide FS
+ *  - fsFiles: every file as a Uint8Array, mounted into Pyodide FS. Strategies
+ *    use os.listdir()/os.path.exists() on asset directories (including image
+ *    folders), so image bytes must be mounted too, not just JSON/text.
  *  - imageUrls: map of /{assetPath} → HTTP URL for direct image rendering
  */
 export async function fetchFolderGame(
@@ -161,18 +163,15 @@ export async function fetchFolderGame(
       const httpUrl = `/games/${slug}/${path}`;
 
       if (isImage) {
-        // Store HTTP URL directly — no fetch needed, Vite serves it
         imageUrls.set(`/${path}`, httpUrl);
-      } else {
-        // Fetch text/JSON to mount into emscripten FS for Python open()
-        try {
-          const res = await fetch(httpUrl);
-          if (res.ok) {
-            const buf = await res.arrayBuffer();
-            fsFiles.set(path, new Uint8Array(buf));
-          }
-        } catch { /* ignore missing files */ }
       }
+      try {
+        const res = await fetch(httpUrl);
+        if (res.ok) {
+          const buf = await res.arrayBuffer();
+          fsFiles.set(path, new Uint8Array(buf));
+        }
+      } catch { /* ignore missing files */ }
     })
   );
 

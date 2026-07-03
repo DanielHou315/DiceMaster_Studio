@@ -29,10 +29,20 @@ export const ExamplesGallery: React.FC<ExamplesGalleryProps> = ({
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    fetch('/examples/manifest.json')
-      .then(r => r.json())
-      .then(setExamples)
-      .catch(console.error);
+    Promise.all([
+      fetch('/examples/manifest.json').then(r => r.json()).catch(() => []),
+      fetch('/api/games').then(r => r.json()).then(d => d.games ?? []).catch(() => []),
+    ]).then(([zipExamples, folderGames]) => {
+      const folderExamples: ExampleMeta[] = folderGames.map((g: any) => ({
+        file: g.slug,
+        type: 'folder',
+        name: g.name,
+        description: g.description,
+        strategy_name: g.strategy_name,
+        version: g.version,
+      }));
+      setExamples([...folderExamples, ...zipExamples]);
+    });
   }, []);
 
   const filtered = examples.filter(e =>

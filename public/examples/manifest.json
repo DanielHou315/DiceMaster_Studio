@@ -7,14 +7,6 @@
     "version": "1.0.0"
   },
   {
-    "file": "chinese_quizlet",
-    "type": "folder",
-    "name": "Chinese Quizlet",
-    "description": "Learn Chinese characters by matching images to words",
-    "strategy_name": "shake_quizlet",
-    "version": "1.0"
-  },
-  {
     "file": "chinese_quizlet_official.zip",
     "name": "Chinese Quizlet (Official)",
     "description": "Advanced multi-screen game. Shake to cycle through vocabulary cards with image hints.",
