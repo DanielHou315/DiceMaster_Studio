@@ -26,3 +26,5 @@ GEMINI.md
 .windsurf/
 .continue/
 .github/copilot-instructions.md
+.codex/
+.playwright-mcp/
