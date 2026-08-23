@@ -1,0 +1,6 @@
+{
+  "name": "LingoLoom",
+  "description": "A rapid-fire language immersion game where you match vocabulary across dice faces. Shake the dice to reveal translations and advance to the next challenge.",
+  "strategy_name": "lingoloom",
+  "version": "1.0.0"
+}

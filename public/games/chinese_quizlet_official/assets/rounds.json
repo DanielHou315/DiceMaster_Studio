@@ -1,0 +1,29 @@
+[
+  {
+    "round": 0,
+    "top": "Apple",
+    "bottom": "苹果 (Píngguǒ)",
+    "front": "Red Fruit",
+    "back": "Sweet",
+    "left": "Crunchy",
+    "right": "🍎"
+  },
+  {
+    "round": 1,
+    "top": "Computer",
+    "bottom": "电脑 (Diànnǎo)",
+    "front": "Electric Brain",
+    "back": "Screen",
+    "left": "Keyboard",
+    "right": "💻"
+  },
+  {
+    "round": 2,
+    "top": "Cat",
+    "bottom": "猫 (Māo)",
+    "front": "Meow",
+    "back": "Feline",
+    "left": "Whiskers",
+    "right": "🐱"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "🐱 Cat",
+    "bottom": "The French used to use 'cat' to describe the sound of a clearing throat.",
+    "front": "Avoir un chat dans la gorge",
+    "back": "To have a frog in one's throat (hoarse)",
+    "left": "To have a cat in the throat",
+    "right": "France / French"
+  },
+  {
+    "round": 1,
+    "top": "🐻 Bear",
+    "bottom": "Bears are seen as heavy and clumsy in Russian folklore.",
+    "front": "Medved na uho nastupil",
+    "back": "To be tone-deaf / no musical talent",
+    "left": "A bear stepped on your ear",
+    "right": "Russia / Russian"
+  },
+  {
+    "round": 2,
+    "top": "🐷 Pig",
+    "bottom": "In medieval times, losers in contests often got a pig as a consolation prize.",
+    "front": "Schwein haben",
+    "back": "To be very lucky",
+    "left": "To have pig",
+    "right": "Germany / German"
+  },
+  {
+    "round": 3,
+    "top": "🐒 Monkey",
+    "bottom": "Used as a reminder of humility even for those with great skill.",
+    "front": "Saru mo ki kara ochiru",
+    "back": "Nobody is perfect / experts make mistakes",
+    "left": "Even monkeys fall from trees",
+    "right": "Japan / Japanese"
+  },
+  {
+    "round": 4,
+    "top": "🐔 Chicken",
+    "bottom": "Likely comes from 'poyo' (a stone bench) where people argued.",
+    "front": "Montar un pollo",
+    "back": "To make a massive scene / throw a fit",
+    "left": "To mount a chicken",
+    "right": "Spain / Spanish"
+  },
+  {
+    "round": 5,
+    "top": "🐊 Crocodile",
+    "bottom": "Based on the myth that crocodiles weep while eating their prey.",
+    "front": "Crocodile Tears",
+    "back": "Insincere or fake sorrow",
+    "left": "Tears of a crocodile",
+    "right": "Global / Ancient Greek"
+  },
+  {
+    "round": 6,
+    "top": "🐴 Donkey",
+    "bottom": "Refers to the act of stopping a journey by tethering your mount.",
+    "front": "Amarrar o burro",
+    "back": "To be stubborn or to stop working",
+    "left": "To tie up the donkey",
+    "right": "Portugal / Portuguese"
+  },
+  {
+    "round": 7,
+    "top": "🐮 Cow",
+    "bottom": "Might be a corruption of 'vassal' or just a funny visual!",
+    "front": "Parler français comme une vache espagnole",
+    "back": "To speak a language very poorly",
+    "left": "To speak French like a Spanish cow",
+    "right": "France / French"
+  },
+  {
+    "round": 8,
+    "top": "🐶 Dog",
+    "bottom": "Refers to weather so bad you wouldn't even let a dog out.",
+    "front": "Tempo da cani",
+    "back": "Terrible weather",
+    "left": "Time of dogs",
+    "right": "Italy / Italian"
+  },
+  {
+    "round": 9,
+    "top": "🐘 Elephant",
+    "bottom": "Elephants were expensive; using one for a bug is massive overkill!",
+    "front": "Khuat Chang Jap Takatan",
+    "back": "To overreact / use too much effort for a small task",
+    "left": "Ride an elephant to catch a grasshopper",
+    "right": "Thailand / Thai"
+  }
+]

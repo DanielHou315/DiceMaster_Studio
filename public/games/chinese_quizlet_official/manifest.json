@@ -1,0 +1,6 @@
+{
+  "name": "Chinese Quizlet (Official)",
+  "description": "Advanced multi-screen game from the DiceMaster repository. Shake to cycle through vocabulary cards with image hints.",
+  "strategy_name": "chinese_quizlet_official",
+  "version": "1.0.0"
+}

@@ -1,0 +1,12 @@
+{
+  "bg_color": "0x0000",
+  "texts": [
+    {
+      "x_cursor": 40,
+      "y_cursor": 200,
+      "font_name": "tf",
+      "font_color": "0xFFFF",
+      "text": "He felt saudade for his childhood home."
+    }
+  ]
+}

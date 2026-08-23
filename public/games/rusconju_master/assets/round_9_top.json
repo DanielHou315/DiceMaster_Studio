@@ -1,0 +1,12 @@
+{
+  "bg_color": "0x0000",
+  "texts": [
+    {
+      "x_cursor": 40,
+      "y_cursor": 200,
+      "font_name": "tf",
+      "font_color": "0xFFFF",
+      "text": "\u041f\u0438\u0441\u0430\u0442\u044c"
+    }
+  ]
+}

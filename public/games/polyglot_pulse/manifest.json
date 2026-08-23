@@ -1,0 +1,6 @@
+{
+  "name": "Polyglot Pulse",
+  "description": "A high-speed language vocabulary trainer. The top face shows a word in a foreign language (Spanish), while the sides provide phonetic hints, grammatical context, and example sentences. Shake to reveal the answer on the bottom face and advance to the next challenge.",
+  "strategy_name": "polyglot_pulse",
+  "version": "1.0.0"
+}

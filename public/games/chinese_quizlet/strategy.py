@@ -5,9 +5,11 @@ Example strategy that loads quizlet cards from assets, each with a unique folder
 
   At the top, a fixed `question.json` describes the text of the question.
 
-This strategy detects shaking and shuffles to a different question after 3 consecutive shakes.
+This strategy detects shaking and shuffles to a different question on every shake.
 After each new question, it:
-  - starts a 3-second stop period where additional motion is ignored
+  - starts a 3-second stop period where additional motion is ignored (debounces a
+    single physical shake gesture, which the hardware accelerometer reports as a
+    burst of many shake events)
   - prints the question on the top screen
   - prints the answer to the bottom screen
   - prints the images/gif to the four side screens in random order
@@ -39,7 +41,6 @@ class ShakeQuizletStrategy(BaseStrategy):
         self.question_file_path = None
 
         # Shake detection state
-        self.shake_history = []
         self.last_trigger_time = 0.0
         self.stop_period_duration = 3.0
 
@@ -140,20 +141,16 @@ class ShakeQuizletStrategy(BaseStrategy):
         self._display_current_question()
 
     def _on_shake(self, intensity):
-        """Handle shake events — trigger next question after 3 consecutive shakes."""
+        """Handle shake events — every detected shake is treated as one deliberate
+        shake gesture and immediately changes the question. The stop period below
+        only guards against the same physical shake re-firing multiple events."""
         now = time.time()
         if now - self.last_trigger_time < self.stop_period_duration:
             return
 
-        self.shake_history.append(True)
-        if len(self.shake_history) > 3:
-            self.shake_history.pop(0)
-
-        if len(self.shake_history) == 3 and all(self.shake_history):
-            self.last_trigger_time = now
-            self.shake_history = []
-            log("3 consecutive shakes detected - changing question")
-            self._next_question()
+        self.last_trigger_time = now
+        log("Shake detected - changing question")
+        self._next_question()
 
     def start_strategy(self):
         motion.on_shake(self._on_shake)
@@ -161,5 +158,4 @@ class ShakeQuizletStrategy(BaseStrategy):
         log("ShakeQuizletStrategy started - waiting for orientation data")
 
     def stop_strategy(self):
-        self.shake_history = []
         log("ShakeQuizletStrategy stopped")

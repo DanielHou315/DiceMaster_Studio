@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Gift",
+    "bottom": "Don't accept a 'gift' in Berlin!",
+    "front": "English",
+    "back": "German",
+    "left": "Poison",
+    "right": "FALSE"
+  },
+  {
+    "round": 1,
+    "top": "Piano",
+    "bottom": "A perfect match!",
+    "front": "English",
+    "back": "Italian",
+    "left": "Piano (Instrument)",
+    "right": "TRUE"
+  },
+  {
+    "round": 2,
+    "top": "Embarazada",
+    "bottom": "Not 'Embarrassed'! High awkwardness risk.",
+    "front": "Spanish",
+    "back": "English",
+    "left": "Pregnant",
+    "right": "FALSE"
+  },
+  {
+    "round": 3,
+    "top": "Library",
+    "bottom": "In France, you buy books at a 'librairie'.",
+    "front": "English",
+    "back": "French",
+    "left": "Librairie (Bookstore)",
+    "right": "FALSE"
+  },
+  {
+    "round": 4,
+    "top": "Hand",
+    "bottom": "Germanic roots stay true here.",
+    "front": "English",
+    "back": "Dutch",
+    "left": "Hand",
+    "right": "TRUE"
+  },
+  {
+    "round": 5,
+    "top": "Burro",
+    "bottom": "Spanish: Donkey | Italian: Butter.",
+    "front": "Spanish",
+    "back": "Italian",
+    "left": "Butter",
+    "right": "FALSE"
+  },
+  {
+    "round": 6,
+    "top": "Preservative",
+    "bottom": "Very different from food additives!",
+    "front": "English",
+    "back": "French",
+    "left": "Préservatif (Condom)",
+    "right": "FALSE"
+  },
+  {
+    "round": 7,
+    "top": "Taxi",
+    "bottom": "The ultimate universal word.",
+    "front": "English",
+    "back": "Global",
+    "left": "Taxi",
+    "right": "TRUE"
+  },
+  {
+    "round": 8,
+    "top": "Sensible",
+    "bottom": "Spanish 'sensible' means 'sensitive'.",
+    "front": "English",
+    "back": "Spanish",
+    "left": "Sensitive",
+    "right": "FALSE"
+  },
+  {
+    "round": 9,
+    "top": "Vase",
+    "bottom": "Identical in both form and function.",
+    "front": "English",
+    "back": "French",
+    "left": "Vase",
+    "right": "TRUE"
+  }
+]

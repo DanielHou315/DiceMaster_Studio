@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Handschuh",
+    "bottom": "Glove",
+    "front": "German",
+    "back": "Hand-Shoe",
+    "left": "Hand",
+    "right": "Shoe"
+  },
+  {
+    "round": 1,
+    "top": "Huǒshān",
+    "bottom": "Volcano",
+    "front": "Chinese",
+    "back": "Fire-Mountain",
+    "left": "Fire",
+    "right": "Mountain"
+  },
+  {
+    "round": 2,
+    "top": "Nijlpard",
+    "bottom": "Hippopotamus",
+    "front": "Dutch",
+    "back": "Nile-Horse",
+    "left": "Nile",
+    "right": "Horse"
+  },
+  {
+    "round": 3,
+    "top": "Hanabi",
+    "bottom": "Fireworks",
+    "front": "Japanese",
+    "back": "Flower-Fire",
+    "left": "Flower",
+    "right": "Fire"
+  },
+  {
+    "round": 4,
+    "top": "Lohikäärme",
+    "bottom": "Dragon",
+    "front": "Finnish",
+    "back": "Salmon-Snake",
+    "left": "Salmon",
+    "right": "Snake"
+  },
+  {
+    "round": 5,
+    "top": "Ísbjörn",
+    "bottom": "Polar Bear",
+    "front": "Icelandic",
+    "back": "Ice-Bear",
+    "left": "Ice",
+    "right": "Bear"
+  },
+  {
+    "round": 6,
+    "top": "Staubsauger",
+    "bottom": "Vacuum Cleaner",
+    "front": "German",
+    "back": "Dust-Sucker",
+    "left": "Dust",
+    "right": "Sucker"
+  },
+  {
+    "round": 7,
+    "top": "Chauve-souris",
+    "bottom": "Bat",
+    "front": "French",
+    "back": "Bald-Mouse",
+    "left": "Bald",
+    "right": "Mouse"
+  },
+  {
+    "round": 8,
+    "top": "Panda",
+    "bottom": "Panda",
+    "front": "Chinese",
+    "back": "Bear-Cat",
+    "left": "Bear",
+    "right": "Cat"
+  },
+  {
+    "round": 9,
+    "top": "Sköldpadda",
+    "bottom": "Turtle",
+    "front": "Swedish",
+    "back": "Shield-Toad",
+    "left": "Shield",
+    "right": "Toad"
+  }
+]

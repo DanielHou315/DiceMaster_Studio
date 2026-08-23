@@ -1,0 +1,6 @@
+{
+  "name": "Dialect Detective",
+  "description": "A cross-cultural vocabulary game that explores how a single language varies across different countries and regions. Shake the dice to discover regional synonyms for common objects.",
+  "strategy_name": "dialect_detective",
+  "version": "1.0.0"
+}

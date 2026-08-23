@@ -1,0 +1,92 @@
+[
+  {
+    "round": 0,
+    "top": "Hablar",
+    "bottom": "Hablo",
+    "front": "Yo",
+    "back": "Presente",
+    "left": "To speak",
+    "right": "1st Sing."
+  },
+  {
+    "round": 1,
+    "top": "Comer",
+    "bottom": "Comes",
+    "front": "Tú",
+    "back": "Presente",
+    "left": "To eat",
+    "right": "2nd Sing."
+  },
+  {
+    "round": 2,
+    "top": "Vivir",
+    "bottom": "Vivimos",
+    "front": "Nosotros",
+    "back": "Presente",
+    "left": "To live",
+    "right": "1st Plural"
+  },
+  {
+    "round": 3,
+    "top": "Ser",
+    "bottom": "Es",
+    "front": "Ella",
+    "back": "Presente",
+    "left": "To be (perm)",
+    "right": "3rd Sing."
+  },
+  {
+    "round": 4,
+    "top": "Ir",
+    "bottom": "Voy",
+    "front": "Yo",
+    "back": "Presente",
+    "left": "To go",
+    "right": "1st Sing."
+  },
+  {
+    "round": 5,
+    "top": "Estar",
+    "bottom": "Están",
+    "front": "Ellos",
+    "back": "Presente",
+    "left": "To be (temp)",
+    "right": "3rd Plural"
+  },
+  {
+    "round": 6,
+    "top": "Tener",
+    "bottom": "Tenéis",
+    "front": "Vosotros",
+    "back": "Presente",
+    "left": "To have",
+    "right": "2nd Plural"
+  },
+  {
+    "round": 7,
+    "top": "Poder",
+    "bottom": "Puede",
+    "front": "Usted",
+    "back": "Presente",
+    "left": "To can / be able",
+    "right": "3rd Sing. (Form)"
+  },
+  {
+    "round": 8,
+    "top": "Querer",
+    "bottom": "Queremos",
+    "front": "Nosotros",
+    "back": "Presente",
+    "left": "To want",
+    "right": "1st Plural"
+  },
+  {
+    "round": 9,
+    "top": "Saber",
+    "bottom": "Sé",
+    "front": "Yo",
+    "back": "Presente",
+    "left": "To know (info)",
+    "right": "1st Sing."
+  }
+]

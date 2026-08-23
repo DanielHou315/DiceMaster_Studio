@@ -1,0 +1,12 @@
+{
+  "bg_color": "0x0000",
+  "texts": [
+    {
+      "x_cursor": 40,
+      "y_cursor": 200,
+      "font_name": "tf",
+      "font_color": "0xFFFF",
+      "text": "Refers to the act of stopping a journey by tethering your mount."
+    }
+  ]
+}

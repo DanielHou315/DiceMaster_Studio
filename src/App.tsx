@@ -111,6 +111,7 @@ export default function App() {
   const [engineType, setEngineType] = useState<'webgl' | 'css' | 'canvas'>('css');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assetBlobURLsRef = useRef<Map<string, string>>(new Map());
+  const featuredInjectAttemptedRef = useRef(false);
   const [currentGameName, setCurrentGameName] = useState<string | null>(null);
 
   // Settings State
@@ -242,9 +243,11 @@ export default function App() {
     }
   };
 
-  const resolveScreens = useCallback((data: any) => {
-    const resolved: any = JSON.parse(JSON.stringify(data));
-    (Object.keys(resolved) as Array<keyof DiceScreens>).forEach(face => {
+  const resolveScreens = useCallback((data: any): DiceScreens => {
+    const resolved: any = {};
+    (['top', 'bottom', 'front', 'back', 'left', 'right'] as const).forEach(face => {
+      const entry = data?.[face] ?? { type: 'text', content: '' };
+      resolved[face] = JSON.parse(JSON.stringify(entry));
       if (resolved[face].type === 'image') {
         const asset = assets.find(a => a.name === resolved[face].content);
         if (asset) {
@@ -660,11 +663,12 @@ export default function App() {
     if (currentGameName) {
       try {
         const slug = currentGameName.toLowerCase().replace(/\s+/g, '_');
-        // Try folder-based game first (served as static HTTP from /games/{slug}/)
-        const folderRes = await fetch(`/games/${slug}/manifest.json`).catch(() => null);
+        // Try folder-based game first — server scans public/games/{slug}/ live,
+        // so the file list is always current (no manifest.json to keep in sync).
+        const folderRes = await fetch(`/api/games/${slug}`).catch(() => null);
         if (folderRes?.ok) {
-          const folderManifest = await folderRes.json();
-          const fileList: string[] = folderManifest.files ?? [];
+          const folderGame = await folderRes.json();
+          const fileList: string[] = folderGame.files ?? [];
           const { fsFiles, imageUrls } = await fetchFolderGame(slug, fileList);
           pyodideService.mountAssets(fsFiles);
           assetBlobURLsRef.current = imageUrls;
@@ -802,7 +806,8 @@ export default function App() {
 
         if (gamesRes.ok) {
           const games = await fetchAndSetGames();
-          if (games.length === 0) {
+          if (games.length === 0 && !featuredInjectAttemptedRef.current) {
+            featuredInjectAttemptedRef.current = true;
             injectFeaturedGame(games);
           }
         }

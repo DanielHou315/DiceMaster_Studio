@@ -4,6 +4,57 @@ import multer from "multer";
 import JSZip from "jszip";
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
+
+const GAMES_DIR = path.join(process.cwd(), "public", "games");
+
+/** Recursively list files under `dir`, returning paths relative to `dir` (posix-style). */
+function walkFiles(dir: string, base: string = dir): string[] {
+  let results: string[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results = results.concat(walkFiles(full, base));
+    } else {
+      results.push(path.relative(base, full).split(path.sep).join("/"));
+    }
+  }
+  return results;
+}
+
+/** Scan public/games/*, reading each folder's manifest.json and computing its file list on the fly. */
+function scanGamesDir() {
+  if (!fs.existsSync(GAMES_DIR)) return [];
+  const games: any[] = [];
+  for (const entry of fs.readdirSync(GAMES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const slug = entry.name;
+    const gameDir = path.join(GAMES_DIR, slug);
+    const manifestPath = path.join(gameDir, "manifest.json");
+    if (!fs.existsSync(manifestPath) || !fs.existsSync(path.join(gameDir, "strategy.py"))) continue;
+
+    let manifest: any = {};
+    try {
+      manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    } catch {
+      continue;
+    }
+
+    const files = walkFiles(gameDir).filter(
+      (f) => f !== "manifest.json" && f !== "strategy.py"
+    );
+
+    games.push({
+      slug,
+      name: manifest.name || slug,
+      description: manifest.description || "",
+      strategy_name: manifest.strategy_name,
+      version: manifest.version,
+      files,
+    });
+  }
+  return games;
+}
 
 const db = new Database("dice_lab.db");
 
@@ -64,6 +115,29 @@ async function startServer() {
   app.get("/api/logs", (req, res) => {
     const logs = db.prepare("SELECT * FROM analysis_logs ORDER BY created_at DESC").all();
     res.json({ logs });
+  });
+
+  // Auto-discovered folder-based games under public/games/ — drop a folder
+  // with manifest.json + strategy.py in there and it shows up here, no
+  // manual manifest curation needed.
+  app.get("/api/games", (req, res) => {
+    try {
+      res.json({ games: scanGamesDir() });
+    } catch (err) {
+      console.error("Error scanning games directory:", err);
+      res.status(500).json({ error: "Failed to scan games directory" });
+    }
+  });
+
+  app.get("/api/games/:slug", (req, res) => {
+    try {
+      const game = scanGamesDir().find((g) => g.slug === req.params.slug);
+      if (!game) return res.status(404).json({ error: "Game not found" });
+      res.json(game);
+    } catch (err) {
+      console.error("Error scanning games directory:", err);
+      res.status(500).json({ error: "Failed to scan games directory" });
+    }
   });
 
   app.get("/api/language-games", (req, res) => {
